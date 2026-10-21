@@ -65,6 +65,11 @@ section{display:flex;flex-direction:column;gap:10px}
 .bar-player .np{font-size:13px;color:var(--muted)}
 .bar-player .np b{color:var(--fg)}
 .bar-player audio{width:100%}
+.bar-player .row{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;justify-content:space-between}
+.bar-player .np{flex:1;min-width:0}
+.mode{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.mode select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
+.mode input{accent-color:var(--accent);margin:0}
 body{padding-bottom:120px}
 .lk{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:55%;flex:none}
 @media (max-width:560px){.pl{flex-wrap:wrap}.lk{max-width:100%;justify-content:flex-start;padding-left:28px}}
@@ -79,7 +84,7 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
 <div class="wrap">
   <header>
     <h1>Коран: перевод смыслов</h1>
-    <p class="lede">All 114 surahs in a beginner-friendly order. For each surah, first play Elmir Kuliev's Russian translation read by Khalyaf Dzhafarov, then the Tafsir as-Sa'di commentary in Kuliev's Russian translation. Every <b>Play</b> button plays the recording in the player at the bottom of the page. Longer commentaries are split into parts labelled by ayah range, and the player moves on to the next part by itself.</p>
+    <p class="lede">All 114 surahs in a beginner-friendly order. For each surah, first play Elmir Kuliev's Russian translation read by Khalyaf Dzhafarov, then the Tafsir as-Sa'di commentary in Kuliev's Russian translation. Every <b>Play</b> button plays the recording in the player at the bottom of the page. Longer commentaries are split into parts labelled by ayah range, and the player moves on by itself: by default to the next surah's translation, which you can change in the player.</p>
   </header>
   <p class="callout"><b>About the recordings.</b> Both audio sets come from Musulmanin.com, published by the Ummah publishing house. The commentary is the full Tafsir as-Sa'di, a widely used classical Sunni commentary; the site doesn't name its narrator. Al-Fatiha and Al-Baqarah also have an optional video tafsir as a second voice.</p>
   <div class="overall" aria-live="polite">
@@ -87,7 +92,7 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
     <div class="bar"><i id="barAll"></i></div>
   </div>
   <div id="plan"></div>
-  <div class="bar-player"><div class="in"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><audio id="au" controls preload="none"></audio></div></div>
+  <div class="bar-player"><div class="in"><div class="row"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><label class="mode">Then play <select id="mode"><option value="tr">next translation</option><option value="all">everything in order</option><option value="stop">nothing</option></select></label><label class="mode"><input type="checkbox" id="autotick" checked> Tick when finished</label></div><audio id="au" controls preload="none"></audio></div></div>
   <div class="foot">
     <span>Your ticks are saved in this browser only. A surah counts as complete when its translation and commentary are both ticked.</span>
     <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
@@ -157,13 +162,27 @@ box.addEventListener('click',e=>{
 });
 const au=document.getElementById('au'),np=document.getElementById('np');let cur=null;
 function playBtn(b){document.querySelectorAll('.play.now').forEach(x=>x.classList.remove('now'));cur=b;b.classList.add('now');
-  au.src=b.dataset.src;np.innerHTML='Now playing: <b></b>';np.querySelector('b').textContent=b.dataset.name;
+  au.src=b.dataset.src;if('mediaSession' in navigator&&window.MediaMetadata){navigator.mediaSession.metadata=new MediaMetadata({title:b.dataset.name,artist:'Коран: перевод смыслов'})}np.innerHTML='Now playing: <b></b>';np.querySelector('b').textContent=b.dataset.name;
   au.play().catch(()=>{np.innerHTML='Could not start this recording. Check your connection, then press play again.'});}
 root.addEventListener('click',e=>{const b=e.target.closest('.play');if(!b)return;
   if(cur===b&&!au.paused){au.pause();return}if(cur===b&&au.src){au.play();return}playBtn(b);});
-au.addEventListener('ended',()=>{if(!cur)return;const nx=cur.nextElementSibling;
-  if(nx&&nx.classList.contains('play')){playBtn(nx);return}
-  cur.classList.remove('now');np.textContent='Finished. Tick the box if you are done with it.';});
+const modeEl=document.getElementById('mode'),tickEl=document.getElementById('autotick');
+try{const m=localStorage.getItem('quran-mode');if(m)modeEl.value=m;const t=localStorage.getItem('quran-autotick');if(t!==null)tickEl.checked=t==='1'}catch(e){}
+modeEl.addEventListener('change',()=>{try{localStorage.setItem('quran-mode',modeEl.value)}catch(e){}});
+tickEl.addEventListener('change',()=>{try{localStorage.setItem('quran-autotick',tickEl.checked?'1':'0')}catch(e){}});
+function nextFrom(b){const all=[...document.querySelectorAll('.play')];const i=all.indexOf(b);
+  const nx=b.nextElementSibling;if(nx&&nx.classList.contains('play'))return nx;  /* next part of the same commentary */
+  if(modeEl.value==='stop')return null;
+  for(let j=i+1;j<all.length;j++){const c=all[j];if(c.dataset.j!=='0')continue;
+    if(modeEl.value==='all'||/t$/.test(c.dataset.k))return c;}
+  return null;}
+function finish(b){if(!tickEl.checked)return;const k=b.dataset.k;const nx=b.nextElementSibling;
+  if(nx&&nx.classList.contains('play'))return;  /* only tick after the last part */
+  const box=document.getElementById('c'+k);if(box&&!box.checked){box.checked=true;box.dispatchEvent(new Event('change',{bubbles:true}))}}
+au.addEventListener('ended',()=>{if(!cur)return;finish(cur);const nx=nextFrom(cur);
+  if(nx){playBtn(nx);nx.scrollIntoView({block:'center',behavior:'smooth'});return}
+  cur.classList.remove('now');np.textContent='Finished.';});
+if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttrack',()=>{if(!cur)return;const nx=nextFrom(cur);if(nx)playBtn(nx)});}
 au.addEventListener('error',()=>{if(au.src)np.textContent='This recording could not be loaded. The site may be down; try again later.'});
 update();
 </script>
