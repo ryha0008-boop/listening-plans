@@ -84,7 +84,7 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
 <div class="wrap">
   <header>
     <h1>Коран: перевод смыслов</h1>
-    <p class="lede">All 114 surahs in a beginner-friendly order. For each surah, first play Elmir Kuliev's Russian translation read by Khalyaf Dzhafarov, then the Tafsir as-Sa'di commentary in Kuliev's Russian translation. Every <b>Play</b> button plays the recording in the player at the bottom of the page. Longer commentaries are split into parts labelled by ayah range, and the player moves on by itself: by default to the next surah's translation, which you can change in the player.</p>
+    <p class="lede">All 114 surahs in a beginner-friendly order. For each surah you can hear Elmir Kuliev's Russian translation read by Khalyaf Dzhafarov, then the Saheeh International English translation read by Ibrahim Walk, and optionally the Tafsir as-Sa'di commentary in Russian. Every <b>Play</b> button plays the recording in the player at the bottom of the page. Longer commentaries are split into parts labelled by ayah range, and the player moves on by itself: by default Russian then English, surah after surah, which you can change in the player.</p>
   </header>
   <p class="callout"><b>About the recordings.</b> Both audio sets come from Musulmanin.com, published by the Ummah publishing house. The commentary is the full Tafsir as-Sa'di, a widely used classical Sunni commentary; the site doesn't name its narrator. Al-Fatiha and Al-Baqarah also have an optional video tafsir as a second voice.</p>
   <div class="overall" aria-live="polite">
@@ -92,7 +92,7 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
     <div class="bar"><i id="barAll"></i></div>
   </div>
   <div id="plan"></div>
-  <div class="bar-player"><div class="in"><div class="row"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><label class="mode">Then play <select id="mode"><option value="tr">next translation</option><option value="all">everything in order</option><option value="stop">nothing</option></select></label><label class="mode"><input type="checkbox" id="autotick" checked> Tick when finished</label></div><audio id="au" controls preload="none"></audio></div></div>
+  <div class="bar-player"><div class="in"><div class="row"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><label class="mode">Then <select id="mode"><option value="tr">Russian + English translations</option><option value="ru">Russian translation only</option><option value="en">English translation only</option><option value="all">everything incl. commentary</option><option value="stop">nothing</option></select></label><label class="mode"><input type="checkbox" id="autotick" checked> Tick when finished</label></div><audio id="au" controls preload="none"></audio></div></div>
   <div class="foot">
     <span>Your ticks are saved in this browser only. A surah counts as complete when its translation and commentary are both ticked.</span>
     <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
@@ -124,6 +124,7 @@ try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
 const items=n=>{const parts=SAADI[n]||[];const L=[
   {k:n+'t',who:'Перевод · Халяф Джафаров',t:'Kuliev translation, read aloud',links:[{u:TR(n),l:'Play'}]},
+  {k:n+'e',who:'English · Ibrahim Walk',t:'Saheeh International translation, read aloud',links:[{u:'en:'+n,l:'Play'}]},
   {k:n+'c',who:'Тафсир ас-Саади',t:parts.length>1?'Commentary in '+parts.length+' parts, by ayah range':'Commentary, one recording',links:parts.map(f=>({u:SA(f),l:parts.length>1?partLabel(f):'Play'}))}];
   if(extra[n])L.push({k:n+'x',who:'Видео-тафсир · Ерсин Амире',t:extra[n].t,links:[{u:extra[n].u,l:'Watch'}],opt:true});
   return L};
@@ -138,7 +139,7 @@ root.innerHTML=stages.map((st,si)=>`
      <div class="pl${state[p.k]?' on':''}">
       <input type="checkbox" id="c${p.k}" data-k="${p.k}"${state[p.k]?' checked':''}>
       <label for="c${p.k}"><span class="who">${p.who}</span><span class="t">${p.t}</span></label>
-      <span class="lk">${p.links.map((x,j)=>/\.mp3$/.test(x.u)?`<button class="play" type="button" data-src="${x.u}" data-k="${p.k}" data-j="${j}" data-name="${S[n-1][1]} · ${p.who.split(' · ')[0]}${p.links.length>1?' · '+x.l:''}">▶ ${x.l==='Play'?'Play':x.l}</button>`:`<a href="${x.u}" target="_blank" rel="noopener">${x.l}</a>`).join('')}</span>
+      <span class="lk">${p.links.map((x,j)=>/\.mp3$|^en:/.test(x.u)?`<button class="play" type="button" data-src="${x.u}" data-k="${p.k}" data-j="${j}" data-name="${S[n-1][1]} · ${p.who.split(' · ')[0]}${p.links.length>1?' · '+x.l:''}">▶ ${x.l==='Play'?'Play':x.l}</button>`:`<a href="${x.u}" target="_blank" rel="noopener">${x.l}</a>`).join('')}</span>
      </div>`).join('')}</div></div>`}).join('')}</div>
  </section>`).join('');
 const full=n=>state[n+'t']&&state[n+'c'];
@@ -161,7 +162,10 @@ box.addEventListener('click',e=>{
   else if(e.target.id==='no'){box.innerHTML='<button id="reset" type="button">Clear all ticks</button>';}
 });
 const au=document.getElementById('au'),np=document.getElementById('np');let cur=null;
-function playBtn(b){document.querySelectorAll('.play.now').forEach(x=>x.classList.remove('now'));cur=b;b.classList.add('now');
+const EW='https://everyayah.com/data/English/Sahih_Intnl_Ibrahim_Walk_192kbps/';
+let ayQ=null,ai=0;
+function playBtn(b){document.querySelectorAll('.play.now').forEach(x=>x.classList.remove('now'));cur=b;b.classList.add('now');ayQ=null;
+  if(b.dataset.src.startsWith('en:')){const n=+b.dataset.src.slice(3);ayQ=Array.from({length:S[n-1][2]},(_,i)=>EW+String(n).padStart(3,'0')+String(i+1).padStart(3,'0')+'.mp3');ai=0;au.src=ayQ[0]}else
   au.src=b.dataset.src;if('mediaSession' in navigator&&window.MediaMetadata){navigator.mediaSession.metadata=new MediaMetadata({title:b.dataset.name,artist:'Коран: перевод смыслов'})}np.innerHTML='Now playing: <b></b>';np.querySelector('b').textContent=b.dataset.name;
   au.play().catch(()=>{np.innerHTML='Could not start this recording. Check your connection, then press play again.'});}
 root.addEventListener('click',e=>{const b=e.target.closest('.play');if(!b)return;
@@ -174,16 +178,19 @@ function nextFrom(b){const all=[...document.querySelectorAll('.play')];const i=a
   const nx=b.nextElementSibling;if(nx&&nx.classList.contains('play'))return nx;  /* next part of the same commentary */
   if(modeEl.value==='stop')return null;
   for(let j=i+1;j<all.length;j++){const c=all[j];if(c.dataset.j!=='0')continue;
-    if(modeEl.value==='all'||/t$/.test(c.dataset.k))return c;}
+    const v=modeEl.value;if(v==='all'||(v==='tr'&&/[te]$/.test(c.dataset.k))||(v==='ru'&&/t$/.test(c.dataset.k))||(v==='en'&&/e$/.test(c.dataset.k)))return c;}
   return null;}
 function finish(b){if(!tickEl.checked)return;const k=b.dataset.k;const nx=b.nextElementSibling;
   if(nx&&nx.classList.contains('play'))return;  /* only tick after the last part */
   const box=document.getElementById('c'+k);if(box&&!box.checked){box.checked=true;box.dispatchEvent(new Event('change',{bubbles:true}))}}
-au.addEventListener('ended',()=>{if(!cur)return;finish(cur);const nx=nextFrom(cur);
+au.addEventListener('ended',()=>{if(!cur)return;
+  if(ayQ&&ai<ayQ.length-1){ai++;au.src=ayQ[ai];au.play().catch(()=>{});return}finish(cur);const nx=nextFrom(cur);
   if(nx){playBtn(nx);nx.scrollIntoView({block:'center',behavior:'smooth'});return}
   cur.classList.remove('now');np.textContent='Finished.';});
 if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttrack',()=>{if(!cur)return;const nx=nextFrom(cur);if(nx)playBtn(nx)});}
-au.addEventListener('error',()=>{if(au.src)np.textContent='This recording could not be loaded. The site may be down; try again later.'});
+au.addEventListener('error',()=>{if(!au.getAttribute('src'))return;
+  if(ayQ&&cur){np.textContent='The English recording could not be loaded. Moving on.';const nx=nextFrom(cur);ayQ=null;if(nx)setTimeout(()=>playBtn(nx),1500);return}
+  np.textContent='This recording could not be loaded. The site may be down; try again later.'});
 update();
 </script>
 
