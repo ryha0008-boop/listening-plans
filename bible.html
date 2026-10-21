@@ -9,12 +9,12 @@
 /* Layout: one reading column, chapter chips per book, a fixed player that alternates Russian and English */
 :root{
   --bg:#f8f5f3; --surface:#ffffff; --fg:#231c1a; --muted:#6f6360; --line:#e4dbd7;
-  --rubric:#a8241c; --rubric-soft:#f3dedb; --en:#2f5d8a; --en-soft:#dde8f3; --done:#3f6b4a;
+  --rubric:#a8241c; --rubric-soft:#f3dedb; --en:#2f5d8a; --en-soft:#dde8f3; --lt:#7a5a08; --lt-soft:#f3e9cf; --done:#3f6b4a;
   --display:"Prata","PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#171211; --surface:#211a19; --fg:#efe7e4; --muted:#a89995; --line:#3a2f2d;
-  --rubric:#e2685d; --rubric-soft:#3d2321; --en:#7fb0e0; --en-soft:#1f2c3a; --done:#7fb38b; color-scheme:dark}}
+  --rubric:#e2685d; --rubric-soft:#3d2321; --en:#7fb0e0; --en-soft:#1f2c3a; --lt:#e0bf6a; --lt-soft:#352c16; --done:#7fb38b; color-scheme:dark}}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 150px}
@@ -46,6 +46,7 @@ section{display:flex;flex-direction:column;gap:8px}
 .ch.done{color:var(--muted);background:transparent;border-style:dashed}
 .ch.now{background:var(--rubric);border-color:var(--rubric);color:#fff}
 .ch.now.en{background:var(--en);border-color:var(--en)}
+.ch.now.lt{background:var(--lt);border-color:var(--lt)}
 .ch:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--rubric);outline-offset:2px}
 .missing{font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding:4px 12px;margin:0;max-width:70ch}
 .player{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);
@@ -56,6 +57,7 @@ section{display:flex;flex-direction:column;gap:8px}
 .np b{color:var(--fg)}
 .np .lang{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:3px;margin-right:6px;background:var(--rubric-soft);color:var(--rubric)}
 .np .lang.en{background:var(--en-soft);color:var(--en)}
+.np .lang.lt{background:var(--lt-soft);color:var(--lt)}
 .np button{font:inherit;font-size:13px;font-weight:700;color:var(--rubric);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 .opt{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
 .opt select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
@@ -69,7 +71,7 @@ section{display:flex;flex-direction:column;gap:8px}
 <div class="wrap">
   <header>
     <h1><span class="cap">Б</span>иблия · Bible</h1>
-    <p class="lede">The Bible read aloud, chapter by chapter, in <b>Russian</b> and then <b>English</b>. Tap any chapter number: you hear it in the Synodal translation, then the same chapter in English, then the next chapter, and so on. Choose the order and languages in the player at the bottom.</p>
+    <p class="lede">The Bible read aloud, chapter by chapter, in <b>Russian</b>, <b>English</b> and <b>Lithuanian</b>. Tap any chapter number: you hear it in the Synodal translation, then the same chapter in English, then in Lithuanian, then the next chapter, and so on. Choose the order and languages in the player at the bottom.</p>
   </header>
   <div class="overall" aria-live="polite">
     <div class="stats"><span><b id="cDone">0</b> of <b id="cAll">0</b> chapters heard</span><span><b id="bDone">0</b> of <b id="bAll">0</b> books</span><span id="pct">0%</span></div>
@@ -77,7 +79,7 @@ section{display:flex;flex-direction:column;gap:8px}
   </div>
   <div id="plan"></div>
   <p class="missing">Not included: Tobit, Judith, Wisdom of Solomon, Sirach, Baruch, the Letter of Jeremiah, 1–3 Maccabees and 2–3 Ezra, and Daniel 13–14. They are part of the Orthodox Bible, but no chapter-by-chapter recording of them exists on either site.</p>
-  <p class="foot">Russian: Synodal translation, read by Alexander Kabilov (azbyka.ru: New Testament, Genesis, Song of Songs) and Alexander Bondarenko (allbible.info: rest of the Old Testament). English: World English Bible (public domain), read by Winfred Henson (ebible.org). Psalms follow the Russian numbering; the English reading switches to the matching English psalm. Your progress is saved in this browser.</p>
+  <p class="foot">Russian: Synodal translation, read by Alexander Kabilov (azbyka.ru: New Testament, Genesis, Song of Songs) and Alexander Bondarenko (allbible.info: rest of the Old Testament). English: World English Bible (public domain), read by Winfred Henson (ebible.org). Lithuanian: the New World Translation (Naujojo pasaulio vertimas), published by Jehovah's Witnesses (jw.org); it is not a translation used by the Orthodox, Catholic or Lutheran churches. Psalms follow the Russian numbering; the English and Lithuanian readings switch to the matching psalm in their numbering. Your progress is saved in this browser.</p>
 </div>
 
 <div class="player"><div class="in">
@@ -85,7 +87,7 @@ section{display:flex;flex-direction:column;gap:8px}
     <span class="np" id="np">Tap a chapter number to start.</span>
   </div>
   <div class="row">
-    <label class="opt">Languages <select id="langs"><option value="ru,en">Russian, then English</option><option value="en,ru">English, then Russian</option><option value="ru">Russian only</option><option value="en">English only</option></select></label>
+    <label class="opt">Languages <select id="langs"><option value="ru,en,lt">Russian, English, Lithuanian</option><option value="lt,ru,en">Lithuanian, Russian, English</option><option value="ru,en">Russian, English</option><option value="ru,lt">Russian, Lithuanian</option><option value="en,lt">English, Lithuanian</option><option value="ru">Russian only</option><option value="en">English only</option><option value="lt">Lithuanian only</option></select></label>
     <label class="opt">Then <select id="mode"><option value="next">keep going</option><option value="book">stop at end of book</option><option value="stop">stop after this chapter</option></select></label>
   </div>
   <audio id="au" controls preload="none"></audio>
@@ -135,6 +137,18 @@ function engCands(b,c){
 function psEng(s){if(s<=8)return[s];if(s===9)return[9,10];if(s<=112)return[s+1];if(s===113)return[114,115];if(s===114)return[116];if(s===115)return[];
   if(s<=145)return[s+1];if(s===146)return[147];if(s===147)return[];return[s];}
 
+
+/* ---------- Lithuanian (New World Translation, jw.org media API) ---------- */
+const LTC={};
+async function ltUrl(b,c){
+  if(!LTC[b]){const cached=store.get('bib3-lt-'+b,null);
+    if(cached)LTC[b]=cached;else{
+      const r=await fetch('https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?output=json&pub=nwt&fileformat=MP3&alllangs=0&langwritten=L&txtCMSLang=L&booknum='+b);
+      if(!r.ok)throw new Error('http '+r.status);const j=await r.json();const list=(((j.files||{}).L||{}).MP3)||[];const m={};
+      list.forEach(e=>{const t=e.track,u=e.file&&e.file.url;if(t&&u&&!m[t]&&(e.bibleBookNumber==null||e.bibleBookNumber===b))m[t]=u});
+      LTC[b]=m;store.set('bib3-lt-'+b,m);}}
+  return LTC[b][c]||null;}
+
 /* ---------- Plan ---------- */
 const B=(key,en,ru,ruUrls,eb)=>({key,en,ru,ruUrls,eb});
 const plan=[
@@ -178,8 +192,8 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.
 let heard=store.get('bib2-heard',{});          // "Mark|3" -> 1
 let kinds=store.get('bib2-engkind',{});        // book -> index of the English file pattern that worked
 const langsEl=document.getElementById('langs'),modeEl=document.getElementById('mode');
-langsEl.value=store.get('bib2-langs','ru,en');modeEl.value=store.get('bib2-mode','next');
-langsEl.onchange=()=>store.set('bib2-langs',langsEl.value);modeEl.onchange=()=>store.set('bib2-mode',modeEl.value);
+langsEl.value=store.get('bib3-langs','ru,en,lt');modeEl.value=store.get('bib2-mode','next');
+langsEl.onchange=()=>store.set('bib3-langs',langsEl.value);modeEl.onchange=()=>store.set('bib2-mode',modeEl.value);
 
 /* ---------- Render ---------- */
 const root=document.getElementById('plan');const BOOK={};
@@ -204,14 +218,20 @@ function tracksFor(bk,c){const out=[];const order=langsEl.value.split(',');
     if(L==='en'){const eChs=bk.eb===19?psEng(c):[c];
       if(bk.eb===19&&!eChs.length)out.push({lang:'en',label:'Psalm '+c+' (Russian numbering)',cands:[],skip:'The English for this psalm was included with the previous one.'});
       eChs.forEach(ec=>{let cs=engCands(bk.eb,ec);const k=kinds[bk.eb];if(k!=null&&cs[k]){cs=[cs[k],...cs.filter((_,i)=>i!==k)]}
-        out.push({lang:'en',label:(bk.eb===19?'Psalm ':bk.en+' ')+ec,cands:cs,eb:bk.eb,all:engCands(bk.eb,ec)})});}}
+        out.push({lang:'en',label:(bk.eb===19?'Psalm ':bk.en+' ')+ec,cands:cs,eb:bk.eb,all:engCands(bk.eb,ec)})});}
+    if(L==='lt'){const lChs=bk.eb===19?psEng(c):[c];
+      lChs.forEach(lc=>out.push({lang:'lt',label:(bk.eb===19?'Psalmyno ':bk.en+' ')+lc+' (lietuviškai)',cands:null,eb:bk.eb,lc}));}}
   return out;}
-function startChapter(b){chip&&chip.classList.remove('now','en');chip=b;const bk=BOOK[b.dataset.book];queue=tracksFor(bk,+b.dataset.c);qi=0;
+function startChapter(b){chip&&chip.classList.remove('now','en','lt');chip=b;const bk=BOOK[b.dataset.book];queue=tracksFor(bk,+b.dataset.c);qi=0;
   store.set('bib2-last',b.dataset.book+'|'+b.dataset.c);playTrack();b.scrollIntoView({block:'nearest',behavior:'smooth'});}
-function showNow(t,extra){np.innerHTML='<span class="lang'+(t.lang==='en'?' en':'')+'">'+(t.lang==='en'?'EN':'RU')+'</span><b></b>'+(extra?' · '+extra:'');np.querySelector('b').textContent=t.label;
-  chip.classList.add('now');chip.classList.toggle('en',t.lang==='en');
-  if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:t.label,artist:t.lang==='en'?'World English Bible':'Синодальный перевод'});}
-function playTrack(){const t=queue[qi];if(!t){chapterDone();return}
+function showNow(t,extra){np.innerHTML='<span class="lang '+t.lang+'">'+t.lang.toUpperCase()+'</span><b></b>'+(extra?' · '+extra:'');np.querySelector('b').textContent=t.label;
+  chip.classList.add('now');chip.classList.toggle('en',t.lang==='en');chip.classList.toggle('lt',t.lang==='lt');
+  if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:t.label,artist:t.lang==='en'?'World English Bible':t.lang==='lt'?'Naujojo pasaulio vertimas':'Синодальный перевод'});}
+async function playTrack(){const t=queue[qi];if(!t){chapterDone();return}
+  if(t.lang==='lt'&&t.cands===null){const my=qi,myQ=queue;showNow(t,'loading…');
+    try{const u=await ltUrl(t.eb,t.lc);t.cands=u?[u]:[]}catch(e){t.cands=[]}
+    if(queue!==myQ||qi!==my)return;
+    if(!t.cands.length){showNow(t,'not available, skipping');setTimeout(()=>{if(queue===myQ&&qi===my){qi++;playTrack()}},1500);return}}
   if(t.skip||!t.cands.length){qi++;playTrack();return}
   candI=0;showNow(t);au.src=t.cands[0];au.play().catch(()=>{});}
 au.addEventListener('error',()=>{const t=queue[qi];if(!t||!au.getAttribute('src'))return;
@@ -223,7 +243,7 @@ function nextChip(b){const i=allChips.indexOf(b);const nx=allChips[i+1];if(!nx)r
   if(modeEl.value==='book'&&nx.dataset.book!==b.dataset.book)return null;return nx;}
 function chapterDone(){heard[chip.dataset.book+'|'+chip.dataset.c]=1;store.set('bib2-heard',heard);chip.classList.add('done');update();
   const nx=modeEl.value==='stop'?null:nextChip(chip);
-  if(nx)startChapter(nx);else{chip.classList.remove('now','en');np.textContent='Finished.'}}
+  if(nx)startChapter(nx);else{chip.classList.remove('now','en','lt');np.textContent='Finished.'}}
 root.addEventListener('click',e=>{const b=e.target.closest('.ch');if(!b)return;
   if(b===chip&&au.src){au.paused?au.play():au.pause();return}startChapter(b)});
 if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttrack',()=>{if(!chip)return;if(qi<queue.length-1){qi++;playTrack()}else{const n=nextChip(chip);if(n)startChapter(n)}});
