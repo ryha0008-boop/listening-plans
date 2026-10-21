@@ -62,6 +62,23 @@ section{display:flex;flex-direction:column;gap:10px}
 .player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .player .pnote{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between}
 .player .pnote a{color:var(--rubric)}
+.pl.rd .who{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;padding-left:28px;margin-bottom:4px}
+.ch{font:inherit;font-size:12px;min-width:30px;padding:3px 6px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;font-variant-numeric:tabular-nums}
+.ch:hover{border-color:var(--rubric)}
+.ch.done{color:var(--muted);background:transparent}
+.ch.now{background:var(--rubric);border-color:var(--rubric);color:#fff}
+.bar-player{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-player .in{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.bar-player .row{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;justify-content:space-between}
+.bar-player .np{flex:1;min-width:0;font-size:13px;color:var(--muted)}
+.bar-player .np b{color:var(--fg)}
+.bar-player .np button{font:inherit;font-size:13px;font-weight:700;color:var(--rubric);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.bar-player audio{width:100%}
+.mode{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.mode select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
+body{padding-bottom:130px}
 a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--rubric);outline-offset:2px}
 .none{color:var(--muted);font-size:13px;font-style:italic}
 .foot{color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
@@ -74,13 +91,14 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
 <div class="wrap">
   <header>
     <h1><span class="cap">Б</span>иблия с толкованиями</h1>
-    <p class="lede">A two-voice listening plan through the Ekzeget channel. Tick each playlist as you finish it. Each <b>Play</b> button opens that playlist in a player right under the book, starting from episode 1; the player's own menu lets you jump between episodes.</p>
+    <p class="lede">A two-voice listening plan through the Ekzeget channel. Tick each playlist as you finish it. Each book starts with the plain Synodal text read aloud: tap a chapter number and it plays in the player at the bottom, then carries on by itself. After that come the commentary playlists; their <b>Play</b> button opens a YouTube player under the book.</p>
   </header>
   <div class="overall" aria-live="polite">
     <div class="stats"><span><b id="pDone">0</b> of <b id="pAll">0</b> playlists</span><span><b id="vDone">0</b> of <b id="vAll">0</b> videos</span><span id="pct">0%</span></div>
     <div class="bar"><i id="barAll"></i></div>
   </div>
   <div id="plan"></div>
+  <div class="bar-player" id="bar"><div class="in"><div class="row"><span class="np" id="np">Tap a chapter number to hear the text read aloud.</span><label class="mode">Then <select id="mode"><option value="next">keep going</option><option value="book">stop at end of book</option><option value="stop">stop after this chapter</option></select></label></div><audio id="au" controls preload="none"></audio></div></div>
   <div class="foot">
     <span>Your ticks are saved in this browser on this device.</span>
     <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
@@ -196,6 +214,35 @@ const url=t=>'https://www.youtube.com/@Ekzeget_Bible/search?query='+encodeURICom
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const vids=n=>n===1?'1 video':n.toLocaleString('en')+' videos';
 let uid=0;
+
+/* ---- Plain readings of the Synodal text ---- */
+const KAB='https://media.azbyka.ru/audio/Svjashhennoe_pisanie/biblija_kabilov/';
+const AB='https://audio.allbible.info/sinodal/';
+const rng=n=>Array.from({length:n},(_,i)=>i+1);
+const kabEv=(c,n)=>({who:'Кабилов',src:'azbyka.ru',ch:rng(n).map(i=>KAB+'novyj-zavet/evangelie/'+c+'_'+i+'.mp3')});
+const kabAp=(c,n)=>({who:'Кабилов',src:'azbyka.ru',ch:rng(n).map(i=>KAB+'novyj-zavet/apostol/'+c+'.'+i+'.mp3')});
+const ab=(nn,c,n)=>({who:'Бондаренко',src:'allbible.info',ch:rng(n).map(i=>AB+nn+'_'+c+'/'+String(i).padStart(String(n).length,'0')+'.mp3')});
+const READ={
+ 'Matthew':kabEv('Mt',28),'Mark':kabEv('Mk',16),'Luke':kabEv('Lk',24),'John':kabEv('In',21),'Acts':kabAp('deyan',28),
+ 'Romans':kabAp('rim',16),'1 Corinthians':kabAp('1kor',16),'2 Corinthians':kabAp('2kor',13),'Galatians':kabAp('gal',6),'Ephesians':kabAp('ef',6),
+ 'Philippians':kabAp('flp',4),'Colossians':kabAp('kol',4),'1 Thessalonians':kabAp('1sol',5),'2 Thessalonians':kabAp('2sol',3),'1 Timothy':kabAp('1tim',6),
+ '2 Timothy':kabAp('2tim',4),'Titus':kabAp('tit',3),'Philemon':kabAp('flm',1),'Hebrews':kabAp('evr',13),'James':kabAp('iak',5),'1 Peter':kabAp('1pet',5),
+ '2 Peter':kabAp('2pet',3),'1 John':kabAp('1in',5),'2 John':kabAp('2in',1),'3 John':kabAp('3in',1),'Jude':kabAp('iud',1),'Revelation':kabAp('otkr',22),
+ 'Genesis':{who:'Кабилов',src:'azbyka.ru',ch:rng(50).map(i=>KAB+'vethij-zavet/bytija/glava_'+i+'.mp3')},
+ 'Song of Songs':{who:'Кабилов',src:'azbyka.ru',ch:rng(8).map(i=>KAB+'vethij-zavet/pesn-pesnej/0'+i+'_glava_'+i+'.mp3')},
+ 'Exodus':ab('02','ex',40),'Leviticus':ab('03','le',27),'Numbers':ab('04','nu',36),'Deuteronomy':ab('05','de',34),'Joshua':ab('06','jos',24),
+ 'Judges':ab('07','jud',21),'Ruth':ab('08','ru',4),'1 Kings':ab('09','1ki',31),'2 Kings':ab('10','2ki',24),'3 Kings':ab('11','3ki',22),'4 Kings':ab('12','4ki',25),
+ '1 Chronicles':ab('13','1ch',29),'2 Chronicles':ab('14','2ch',36),'Ezra':ab('15','ezr',10),'Nehemiah':ab('16','ne',13),'Esther':ab('17','es',10),
+ 'Job':ab('18','job',42),'Psalms':ab('19','ps',150),'Proverbs':ab('20','pr',31),'Ecclesiastes':ab('21','ec',12),'Isaiah':ab('23','isa',66),
+ 'Jeremiah':ab('24','jer',52),'Lamentations':ab('25','la',5),'Ezekiel':ab('26','eze',48),'Daniel':ab('27','da',12),'Hosea':ab('28','ho',14),
+ 'Joel':ab('29','joe',3),'Amos':ab('30','am',9),'Obadiah':ab('31','ob',1),'Jonah':ab('32','jon',4),'Micah':ab('33','mic',7),'Nahum':ab('34','na',3),
+ 'Habakkuk':ab('35','hab',3),'Zephaniah':ab('36','sof',3),'Haggai':ab('37','hag',2),'Zechariah':ab('38','zec',14),'Malachi':ab('39','mal',4)};
+function readRow(en,ru){const r=READ[en];const k='read:'+en;
+ if(!r)return '';const n=r.ch.length;
+ return `<div class="pl rd${state[k]?' on':''}"><input type="checkbox" id="r-${esc(en).replace(/\s/g,'_')}" data-t="${esc(k)}"${state[k]?' checked':''}>
+  <label for="r-${esc(en).replace(/\s/g,'_')}"><span class="who">Чтение текста · ${r.who}</span> <span class="n">· ${n===1?'1 chapter':n+' chapters'}</span><span class="t">The Synodal text read aloud (${r.src})</span></label></div>
+  <div class="chips" data-book="${esc(en)}">${r.ch.map((u,i)=>`<button class="ch" type="button" data-src="${u}" data-book="${esc(en)}" data-ru="${esc(ru)}" data-i="${i}" title="Глава ${i+1}">${i+1}</button>`).join('')}</div>`}
+
 const root=document.getElementById('plan');
 root.innerHTML=plan.map((st,si)=>`
  <section data-s="${si}">
@@ -203,7 +250,7 @@ root.innerHTML=plan.map((st,si)=>`
   ${st.note?`<p class="note">${st.note}</p>`:''}
   <div class="books">${st.books.map(([en,ru,...pls])=>`
    <div class="book"><div class="bname">${en}<small>${ru}</small></div>
-    <div class="pls">${pls.map(p=>{const ix=uid;const id='c'+(uid++);p.id=id;p.u=(IDS.length===164&&IDS[ix])?'https://www.youtube.com/playlist?list='+IDS[ix]:url(p.t);return `
+    <div class="pls">${readRow(en,ru)}${pls.map(p=>{const ix=uid;const id='c'+(uid++);p.id=id;p.u=(IDS.length===164&&IDS[ix])?'https://www.youtube.com/playlist?list='+IDS[ix]:url(p.t);return `
      <div class="pl${state[p.t]?' on':''}" id="row-${id}">
       <input type="checkbox" id="${id}" data-t="${esc(p.t)}"${state[p.t]?' checked':''}>
       <label for="${id}"><span class="who">${p.s}</span> <span class="n">· ${vids(p.n)}</span><span class="t">${esc(clean(p.t))}</span></label>
@@ -241,6 +288,33 @@ root.addEventListener('click',e=>{const b=e.target.closest('.play');if(!b)return
   const id=b.dataset.list;const d=document.createElement('div');d.className='player';
   d.innerHTML='<div class="frame"><iframe src="https://www.youtube.com/embed/videoseries?list='+id+'&autoplay=1&rel=0" title="Playlist player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><div class="pnote"><span>If the player does not load, open the playlist on YouTube instead.</span><a href="https://www.youtube.com/playlist?list='+id+'" target="_blank" rel="noopener">Open on YouTube</a></div>';
   book.appendChild(d);d.scrollIntoView({block:'nearest',behavior:'smooth'});});
+
+/* ---- reading player ---- */
+const au=document.getElementById('au'),np=document.getElementById('np'),modeEl=document.getElementById('mode');let cur=null;
+let heard={};try{heard=JSON.parse(localStorage.getItem('bible-heard')||'{}')||{}}catch(e){}
+try{const m=localStorage.getItem('bible-mode');if(m)modeEl.value=m}catch(e){}
+modeEl.addEventListener('change',()=>{try{localStorage.setItem('bible-mode',modeEl.value)}catch(e){}});
+document.querySelectorAll('.ch').forEach(b=>{if(heard[b.dataset.src])b.classList.add('done')});
+function label(b){return b.dataset.ru+', глава '+(+b.dataset.i+1)}
+function playCh(b){document.querySelectorAll('.ch.now').forEach(x=>x.classList.remove('now'));cur=b;b.classList.add('now');au.src=b.dataset.src;
+  np.innerHTML='Now playing: <b></b>';np.querySelector('b').textContent=label(b);
+  if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:label(b),artist:'Библия, Синодальный перевод'});
+  try{localStorage.setItem('bible-last',b.dataset.src)}catch(e){}
+  au.play().catch(()=>{np.textContent='Could not start. Check your connection and press play.'});}
+function nextCh(b){const nx=b.nextElementSibling;if(nx)return nx;if(modeEl.value!=='next')return null;
+  const all=[...document.querySelectorAll('.chips')];const i=all.indexOf(b.parentElement);const n=all[i+1];return n?n.firstElementChild:null}
+root.addEventListener('click',e=>{const b=e.target.closest('.ch');if(!b)return;if(cur===b){au.paused?au.play():au.pause();return}playCh(b)});
+au.addEventListener('ended',()=>{if(!cur)return;heard[cur.dataset.src]=1;cur.classList.add('done');try{localStorage.setItem('bible-heard',JSON.stringify(heard))}catch(e){}
+  const last=!cur.nextElementSibling;
+  if(last){const box=cur.closest('.pls').querySelector('.pl.rd input');if(box&&!box.checked){box.checked=true;box.dispatchEvent(new Event('change',{bubbles:true}))}}
+  const nx=modeEl.value==='stop'?null:nextCh(cur);
+  if(nx){playCh(nx);nx.scrollIntoView({block:'center',behavior:'smooth'})}else{cur.classList.remove('now');np.textContent='Finished.'}});
+au.addEventListener('error',()=>{if(au.src)np.textContent='This chapter could not be loaded. The site may be down; try again later.'});
+if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttrack',()=>{if(cur){const n=nextCh(cur);if(n)playCh(n)}});
+  navigator.mediaSession.setActionHandler('previoustrack',()=>{if(cur&&cur.previousElementSibling)playCh(cur.previousElementSibling)})}
+try{const last=localStorage.getItem('bible-last');const b=last&&[...document.querySelectorAll('.ch')].find(x=>x.dataset.src===last);
+  if(b){np.innerHTML='Last time: <b></b> · <button type="button" id="resume">Resume</button>';np.querySelector('b').textContent=label(b);
+    document.getElementById('resume').addEventListener('click',()=>{playCh(b);b.scrollIntoView({block:'center'})})}}catch(e){}
 update();
 </script>
 
