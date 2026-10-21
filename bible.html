@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exegete Listening Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=PT+Sans:wght@400;700&display=swap">
+<style>
+html,body{margin:0}
+/* Layout: a rubricated service-book column — red marks the headings and progress, as in liturgical books */
+:root{
+  --bg:#f8f5f3; --surface:#ffffff; --fg:#231c1a; --muted:#6f6360; --line:#e4dbd7;
+  --rubric:#a8241c; --rubric-soft:#f3dedb; --done:#3f6b4a;
+  --display:"Prata","PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171211; --surface:#211a19; --fg:#efe7e4; --muted:#a89995; --line:#3a2f2d;
+  --rubric:#e2685d; --rubric-soft:#3d2321; --done:#7fb38b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171211; --surface:#211a19; --fg:#efe7e4; --muted:#a89995; --line:#3a2f2d;
+  --rubric:#e2685d; --rubric-soft:#3d2321; --done:#7fb38b; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.15}
+h1 .cap{color:var(--rubric)}
+.lede{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.overall{display:flex;flex-direction:column;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;
+  background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.stats b{color:var(--fg)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--rubric);transition:width .3s}
+section{display:flex;flex-direction:column;gap:10px}
+.shead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.shead h2{font-size:22px}
+.shead h2 span{color:var(--rubric);font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--body);font-weight:700;margin-right:8px}
+.scount{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:14px;margin:0;max-width:62ch}
+.books{border-top:1px solid var(--line)}
+.book{display:grid;grid-template-columns:150px 1fr;gap:6px 16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.bname{font-weight:700;min-width:0}
+.bname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.pls{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pl{display:flex;align-items:center;gap:10px;min-width:0}
+.pl input{width:18px;height:18px;accent-color:var(--rubric);flex:none;margin:0}
+.pl label{flex:1;min-width:0;cursor:pointer}
+.pl .who{font-weight:700}
+.pl .n{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.pl .t{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.pl.on .who,.pl.on .t{text-decoration:line-through;text-decoration-color:var(--muted)}
+.pl.on .who{color:var(--done)}
+.pl a{flex:none;font-size:13px;color:var(--rubric);text-decoration:none;border:1px solid var(--rubric-soft);
+  background:var(--rubric-soft);padding:3px 10px;border-radius:4px;font-weight:700}
+.pl a:hover{border-color:var(--rubric)}
+.play{flex:none;font:inherit;font-size:13px;font-weight:700;color:#fff;background:var(--rubric);border:0;padding:4px 12px;border-radius:4px;cursor:pointer}
+.play.on{background:var(--fg);color:var(--bg)}
+.player{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.player .frame{position:relative;width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player .pnote{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between}
+.player .pnote a{color:var(--rubric)}
+a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--rubric);outline-offset:2px}
+.none{color:var(--muted);font-size:13px;font-style:italic}
+.foot{color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.foot button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer}
+.confirm{display:inline-flex;gap:8px;align-items:center}
+@media (max-width:560px){.book{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><span class="cap">Б</span>иблия с толкованиями</h1>
+    <p class="lede">A two-voice listening plan through the Ekzeget channel. Tick each playlist as you finish it. Each <b>Play</b> button opens that playlist in a player right under the book, starting from episode 1; the player's own menu lets you jump between episodes.</p>
+  </header>
+  <div class="overall" aria-live="polite">
+    <div class="stats"><span><b id="pDone">0</b> of <b id="pAll">0</b> playlists</span><span><b id="vDone">0</b> of <b id="vAll">0</b> videos</span><span id="pct">0%</span></div>
+    <div class="bar"><i id="barAll"></i></div>
+  </div>
+  <div id="plan"></div>
+  <div class="foot">
+    <span>Your ticks are saved in this browser on this device.</span>
+    <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
+  </div>
+</div>
+
+<script>
+const D=(t,n)=>({t,n,s:'Десницкий'}), S=(t,n)=>({t,n,s:'Стеняев'}), O=(t,n,s)=>({t,n,s});
+const plan=[
+ {num:'Stage 1',name:'Gospels and Acts',note:'Start here. Alternate the two speakers chapter by chapter.',books:[
+  ['Mark','Евангелие от Марка',D('Евангелие от Марка. Андрей Десницкий',16),S('Евангелие от Марка. Протоиерей Олег Стеняев.',16)],
+  ['Matthew','Евангелие от Матфея',D('Евангелие от Матфея. Андрей Десницкий',28),S('Евангелие от Матфея. Протоиерей Олег Стеняев',28)],
+  ['Luke','Евангелие от Луки',D('Евангелие от Луки. Профессор Андрей Десницкий',24),S('Евангелие от Луки. Протоиерей Олег Стеняев.',24)],
+  ['John','Евангелие от Иоанна',D('Евангелие от Иоанна. Профессор Андрей Десницкий',21),S('Евангелие от Иоанна. Священник Олег Стеняев.',21)],
+  ['Acts','Деяния апостолов',D('Деяния апостолов. Андрей Десницкий.',28),S('Деяния апостолов. Протоиерей Олег Стеняев.',28)]]},
+ {num:'Alongside',name:'Faith and worship',note:'Listen to these between Gospel episodes during Stage 1.',books:[
+  ['NT introduction','Введение',O('Введение в Священное Писание Нового Завета. Протоиерей Димитрий Юревич',38,'Юревич')],
+  ['Ten Commandments','10 заповедей',O('10 заповедей. Протоиерей Димитрий Юревич',3,'Юревич')],
+  ['Prayer book','Молитвослов',O('Молитвослов',2,'Экзегет')],
+  ['Liturgy','Литургика',O('Литургика',23,'Экзегет')],
+  ['Orthodoxy & Catholicism','Различия',O('Православие и католицизм. Различия. Иеромонах Нектарий (Соколов)',21,'Нектарий')],
+  ['Ecumenical Councils','Вселенские Соборы',O('Вселенские Соборы',8,'Экзегет')]]},
+ {num:'Stage 2',name:'Epistles and Revelation',books:[
+  ['Romans','К Римлянам',D('Послание к Римлянам. Проф. А.С. Десницкий',16),S('Послание к Римлянам. Протоиерей Олег Стеняев',16)],
+  ['1 Corinthians','1 Коринфянам',D('1 Коринфянам. Проф. А.С. Десницкий',16),S('1-е Послание к Коринфянам. Протоиерей Олег Стеняев',16)],
+  ['2 Corinthians','2 Коринфянам',D('2-е Послание к Коринфянам. Андрей Десницкий',13),S('2-е Послание к Коринфянам. Протоиерей Олег Стеняев',13)],
+  ['Galatians','К Галатам',D('Послание к Галатам. Андрей Десницкий',6),S('Послание к Галатам. Протоиерей Олег Стеняев.',6)],
+  ['Ephesians','К Ефесянам',D('Послание к Ефесянам. Андрей Десницкий',6),S('Послание к Ефесянам. Протоиерей Олег Стеняев',6)],
+  ['Philippians','К Филиппийцам',D('Послание к Филиппийцам. Андрей Десницкий',4),S('Послание к Филиппийцам. Протоиерей Олег Стеняев',4)],
+  ['Colossians','К Колоссянам',D('Послание к Колоссянам. Андрей Десницкий',4),S('Послание к Колоссянам. Протоиерей Олег Стеняев',4)],
+  ['1 Thessalonians','1 Фессалоникийцам',D('1-е Фессалоникийцам. Андрей Десницкий',5),S('1-е Послание к Фессалоникийцам. Протоиерей Олег Стеняев',5)],
+  ['2 Thessalonians','2 Фессалоникийцам',D('2-е Фессалоникийцам. Андрей Десницкий',3),S('2-е Послание к Фессалоникийцам. Протоиерей Олег Стеняев',3)],
+  ['1 Timothy','1 Тимофею',D('1-е Послание к Тимофею. Андрей Десницкий',6),S('1- е Послание к Тимофею. Протоиерей Олег Стеняев',5)],
+  ['2 Timothy','2 Тимофею',D('2-ое послание к Тимофею. Андрей Десницкий',4),S('2-е Послание к Тимофею. Протоиерей Олег Стеняев',4)],
+  ['Titus','К Титу',D('Послание к Титу. Андрей Десницкий',3),S('Послание к Титу. Протоиерей Олег Стеняев',3)],
+  ['Philemon','К Филимону',D('Послание к Филимону. Андрей Десницкий',1),S('Послание к Филимону. Протоиерей Олег Стеняев',1)],
+  ['Hebrews','К Евреям',D('Послание к Евреям. Андрей Десницкий',13),S('Послание к Евреям. Протоиерей Олег Стеняев',13)],
+  ['James','Иакова',D('Послание Иакова. Андрей Десницкий.',5),S('Послание Иакова. Протоиерей Олег Стеняев',5)],
+  ['1 Peter','1 Петра',D('1-е Послание Петра. Андрей Десницкий.',5),S('1 послание Петра. Прот. Олег Стеняев',5)],
+  ['2 Peter','2 Петра',D('2-е Послание Петра. Андрей Десницкий',3),S('2-е послание Петр. Олег Стеняев',3)],
+  ['1 John','1 Иоанна',D('1 Послание Иоанна. Андрей Десницкий',5),S('1-е Послание Иоанна. Протоиерей Олег Стеняев',5)],
+  ['2 John','2 Иоанна',D('2-е Послание Иоанна. Профессор Андрей Десницкий',1),S('2-е Послание Иоанна. Протоиерей Олег Стеняев',1)],
+  ['3 John','3 Иоанна',D('3-е Послание Иоанна. Профессор Андрей Десницкий',1),S('3-е Послание Иоанна. Протоиерей Олег Стеняев',1)],
+  ['Jude','Иуды',D('Послание Апостола Иуды. Профессор Андрей Десницкий',1),S('Соборное Послание Иуды. Протоиерей Олег Стеняев.',1)],
+  ['Revelation','Апокалипсис',D('Апокалипсис. Профессор Андрей Десницкий',22),S('Апокалипсис. Священник Олег Стеняев.',22)]]},
+ {num:'Stage 3',name:'Psalms',note:'One psalm a day, running alongside everything else.',books:[
+  ['Psalms','Псалтирь',D('Псалтирь. Андрей Десницкий',151),S('Псалтирь.Избранные псалмы. Протоиерей Олег Стеняев',11)]]},
+ {num:'Stage 4',name:'Old Testament stories',books:[
+  ['Genesis','Бытие',D('Бытие. Профессор Андрей Десницкий',50),S('Бытие. Протоиерей Олег Стеняев.',50)],
+  ['Exodus','Исход',D('Исход. Андрей Десницкий',40),S('Книга Исход. Протоиерей Олег Стеняев.',40)],
+  ['Joshua','Иисус Навин',D('Книга Иисуса Навина. Андрей Десницкий',24),S('Книга Иисуса Навина. Протоиерей Олег (Стеняев)',24)],
+  ['Judges','Судьи',D('Книга Судей. Андрей Десницкий.',21),S('Книга Судей. Протоиерей Олег Стеняев',21)],
+  ['Ruth','Руфь',D('Книга Руфь. Андрей Десницкий',4),S('Книга Руфи. Протоиерей Олег',4)],
+  ['1 Kings','1 Царств',D('1-Книга Царств. Андрей Десницкий',31),S('1 Царств. Протоиерей Олег.',31)],
+  ['2 Kings','2 Царств',D('2-я Царств. Андрей Десницкий',24),S('2-я Книга Царств. Протоиерей Олег Стеняев.',24)],
+  ['3 Kings','3 Царств',D('3 Царств. Профессор Андрей Десницкий',22),S('3-я Книга Царств. Протоиерей Олег Стеняев.',22)],
+  ['4 Kings','4 Царств',D('4 Царств. Профессор Андрей Десницкий',25),S('4-я Царств. Священник Олег Стеняев.',25)]]},
+ {num:'Stage 5',name:'Wisdom books',books:[
+  ['Job','Иов',D('Книга Иова. Профессор Андрей Десницкий',42),S('Книга Иова. Протоиерей Олег Стеняев',42)],
+  ['Proverbs','Притчи',D('Притчи Соломона. Андрей Десницкий',31),O('Притчи Соломона. Священник Стефан Домусчи.',31,'Домусчи')],
+  ['Ecclesiastes','Екклесиаст',D('Книга Екклесиаста. Андрей Десницкий',12),O('Екклесиаст. Священник Антоний Лакирев',12,'Лакирев')],
+  ['Wisdom of Solomon','Премудрость Соломона',D('Книга Премудрости Соломона. Профессор Андрей Десницкий',19),O('Книга Премудрости Соломона. Священник Стефан Домусчи',19,'Домусчи')],
+  ['Sirach','Сирах',D('Книга Премудрости Иисуса, сына Сирахова. Андрей Десницкий',51),O('Книга Премудрости Иисуса, сына Сирахова. Игумен Лука (Степанов)',52,'Игумен Лука')],
+  ['Song of Songs','Песнь Песней',D('Песнь Песней. Андрей Десницкий',8),S('Песнь Песней Соломона. Протоиерей Олег Стеняев',8)]]},
+ {num:'Stage 6',name:'Prophets',note:'Desnitsky has no Isaiah series, so Isaiah uses Lakirev and Stenyaev.',books:[
+  ['Isaiah','Исаия',O('Книга пророка Исайи. Священник Антоний Лакирев',66,'Лакирев'),S('Книга пророка Исайи. Протоиерей Олег Стеняев',35)],
+  ['Jeremiah','Иеремия',D('Пророк Иеремия. Андрей Десницкий.',52),O('Книга пророка Иеремии. Священник Антоний Лакирев',53,'Лакирев')],
+  ['Lamentations','Плач Иеремии',D('Плач Иеремии. Андрей Десницкий',5),O('Плач Иеремии. Священник Александр Сатомский.',5,'Сатомский')],
+  ['Baruch','Варух',D('Книга пророка Варуха. Андрей Десницкий',5),S('Книга Варуха. Протоиерей Олег Стеняев',5)],
+  ['Letter of Jeremiah','Послание Иеремии',D('Послание Иеремии. Андрей Десницкий.',1),O('Послание Иеремии. Дмитрий Георгиевич Добыкин',2,'Добыкин')],
+  ['Ezekiel','Иезекииль',D('Пророк Иезекииль. Андрей Десницкий.',48),S('Книга пророка Иезекииля. Протоиерей Олег Стеняев',48)],
+  ['Daniel','Даниил',D('Книга пророка Даниила. Андрей Десницкий',14),O('Книга пророка Даниила. Священник Антоний Лакирев',15,'Лакирев')],
+  ['Hosea','Осия',D('Пророк Осия. Проф. А.С. Десницкий',14),O('Книга пророка Осии. Священник Антоний Лакирев',14,'Лакирев')],
+  ['Joel','Иоиль',D('Пророк Иоиль. Проф. А.С. Десницкий',3),O('Книга пророка Иоиля. Священник Антоний Лакирев',3,'Лакирев')],
+  ['Amos','Амос',D('Книга пророка Амоса. Андрей Десницкий.',9),O('Книга пророка Амоса. Священник Антоний Лакирев',9,'Лакирев')],
+  ['Obadiah','Авдий',D('Пророк Авдий. Проф. А.С. Десницкий',1),O('Книга пророка Авдия. Дмитрий Георгиевич Добыкин',2,'Добыкин')],
+  ['Jonah','Иона',D('Пророк Иона. Проф. А.С. Десницкий',4),O('Книга пророка Ионы. Священник Антоний Лакирев',4,'Лакирев')],
+  ['Micah','Михей',D('Книга пророка Михея. Андрей Десницкий',7),O('Книга пророка Михея. Священник Антоний Лакирев',7,'Лакирев')],
+  ['Nahum','Наум',D('Пророк Наум. Проф. А.С. Десницкий',3),O('Книга пророка Наума. Священник Антоний Лакирев',3,'Лакирев')],
+  ['Habakkuk','Аввакум',D('Пророк Аввакум. Андрей Десницкий',3),O('Книга пророка Аввакума. Священник Антоний Лакирев',3,'Лакирев')],
+  ['Zephaniah','Софония',D('Пророк Софония. Проф. А.С. Десницкий',3),O('Книга пророка Софонии. Священник Антоний Лакирев',3,'Лакирев')],
+  ['Haggai','Аггей',D('Книга пророка Аггея. Андрей Десницкий',2),O('Книга пророка Аггея. Священник Антоний Лакирев',2,'Лакирев')],
+  ['Zechariah','Захария',D('Пророк Захария. Проф. А.С. Десницкий.',14),O('Книга пророка Захарии. Священник Антоний Лакирев',14,'Лакирев')],
+  ['Malachi','Малахия',D('Пророк Малахия. Проф. А.С. Десницкий',4),O('Книга пророка Малахии. Священник Антоний Лакирев',4,'Лакирев')]]},
+ {num:'Stage 7',name:'The rest of the Old Testament',books:[
+  ['Leviticus','Левит',D('Книга Левит. Андрей Десницкий.',27),S('Книга Левит. Протоиерей Олег Стеняев.',27)],
+  ['Numbers','Числа',D('Книга Числа. Андрей Десницкий.',36),S('Книга Числа. Протоиерей Олег Стеняев',36)],
+  ['Deuteronomy','Второзаконие',D('Второзаконие. Андрей Десницкий',34),S('Второзаконие. Протоиерей Олег Стеняев',34)],
+  ['1 Chronicles','1 Паралипоменон',D('1-я книга Паралипоменон. Андрей Десницкий',29),S('1 Паралипоменон. Протоиерей Олег Стеняев.',29)],
+  ['2 Chronicles','2 Паралипоменон',D('2-я книга Паралипоменон. Андрей Десницкий',36),S('2 Паралипоменон. Протоиерей Олег Стеняев.',36)],
+  ['Ezra','1 Ездры',D('Книга Ездры. Профессор Андрей Десницкий.',10),S('1-я Книга Ездры.Олег Стеняев',10)],
+  ['Nehemiah','Неемия',D('Книга Неемии. Профессор Андрей Десницкий.',13),S('Книга Неемии. Протоиерей Олег Стеняев',13)],
+  ['2 Ezra','2 Ездры',D('2-я Книга Ездры. Профессор Андрей Десницкий',9),S('2-я Книга Ездры. Олег Стеняев',9)],
+  ['3 Ezra','3 Ездры',D('3-я Книга Ездры. Профессор Андрей Десницкий',16)],
+  ['Tobit','Товит',D('Товит. Профессор Андрей Десницкий.',14),S('Книга Товита. Протоиерей Олег Стеняев',14)],
+  ['Judith','Иудифь',D('Иудифь. Профессор Андрей Десницкий',16),O('Книга Иудифь. Дмитрий Георгиевич Добыкин',17,'Добыкин')],
+  ['Esther','Есфирь',D('Книга Есфирь. Андрей Десницкий',10),S('Есфирь. Священник Олег Стеняев',10)],
+  ['1 Maccabees','1 Маккавейская',D('1 Маккавейская. Андрей Десницкий',16),O('1 Маккавейская. Священник Григорий Геронимус.',17,'Геронимус')],
+  ['2 Maccabees','2 Маккавейская',D('2 Маккавейская. Андрей Десницкий.',15),O('2 Маккавейская книга. Священник Григорий Геронимус',15,'Геронимус')],
+  ['3 Maccabees','3 Маккавейская',D('3 Маккавейская. Андрей Десницкий',7),O('3 Маккавейская книга. Священник Григорий Геронимус',7,'Геронимус')]]},
+ {num:'Anytime',name:'When questions come up',extra:true,note:'Dip in as needed. These are not counted in your progress.',books:[
+  ['Difficult passages','Трудные места',D('Библия трудные места. Профессор Андрей Десницкий',182),O('Библия трудные места проф.А.И.Осипов',130,'Осипов')],
+  ['Questions answered','Вопросы',O('Православный ответ',3284,'Экзегет'),O('Библия отвечает',1579,'Экзегет')],
+  ['Church Fathers','Толкования святых',O('Толкования святых',45,'Экзегет')]]}
+];
+const IDS=["PL1yp2HPgpRbNEYtyehUcMVTUzzSlxfuAJ", "PL1yp2HPgpRbNe6t8goaC8wV1j0rZvRqx-", "PL1yp2HPgpRbPWE0RKaScAcawjqUH8nrnr", "PL1yp2HPgpRbPHFB6Owwe8XYc11mfWvRq9", "PL1yp2HPgpRbPg6gHXZAKrJZRiNZMrn-0-", "PL1yp2HPgpRbO6P5hzc7-quQairRCxJEPr", "PL1yp2HPgpRbNH9akmj6xfj5kAogghz_JZ", "PL1yp2HPgpRbNCUX8ICSewd2MBT33HU4A1", "PL1yp2HPgpRbODwDOez03QoU0LmyVweY3n", "PL1yp2HPgpRbNcHhI8fQoDjVd_-gZSdX4Y", "PL1yp2HPgpRbOey4NZLvybRne1rcmIN5s9", "PL1yp2HPgpRbPtg1HmL1x8glbHtd8vQq2c", "PL1yp2HPgpRbNZnA6zm71B4jNwNhUQPZeZ", "PL1yp2HPgpRbOWjPKNoMd4Z8NEJyZvbmJ4", "PL1yp2HPgpRbMGLEUkH42yFpj3FA1XD8Qz", "PL1yp2HPgpRbNjE-gZkEpkh2Qw7Yaudy_9", "PL1yp2HPgpRbOtyRxRo2i7RjYvfeDCHg5-", "PL1yp2HPgpRbPSh5_KhohybUn-4v99TdC2", "PL1yp2HPgpRbMttk8v-Kht6e3lrmhpbLyc", "PL1yp2HPgpRbPEiGje3fzAra_ly_LMRm0P", "PL1yp2HPgpRbMB1we4NQeBVsojt4P1LyZS", "PL1yp2HPgpRbMYNwwMYOMmAsQBiRb6J7yK", "PL1yp2HPgpRbOyoVFQJjmXbcuobXPzplWh", "PL1yp2HPgpRbNtmIvEYnzIru0R2-B4q66_", "PL1yp2HPgpRbPIQNJ_iirds1gAz5oacp6E", "PL1yp2HPgpRbNaq6YkDFrZVpbM4z4ldI8f", "PL1yp2HPgpRbOjuxVDE6KI4GeGN8NTS8Fm", "PL1yp2HPgpRbMRdsvDUp9TdKUTuZ9YkOfu", "PL1yp2HPgpRbON2nEr53TCtAO7TQIOgigI", "PL1yp2HPgpRbN0y48Fy3gHPj8gsmEeMUB2", "PL1yp2HPgpRbOva5tIwm3ubTVfvSptbM3l", "PL1yp2HPgpRbMRpQxPnPRiQ0wK8DjzOldG", "PL1yp2HPgpRbOnY_U_vFbmbgzPN4YsYSMp", "PL1yp2HPgpRbNIdrefzk_2UEDYNyCSrEAC", "PL1yp2HPgpRbN_TS4YvF5J3t_MzibafY1u", "PL1yp2HPgpRbMVzhp46E-KjIcPCC_48C7U", "PL1yp2HPgpRbMB5pnJnzSc3yB80P_rTRhY", "PL1yp2HPgpRbMaQn-KAUbunnNmSE0OEO1L", "PL1yp2HPgpRbOXeiCZeh4AbRdEe_c8UWgQ", "PL1yp2HPgpRbPO6pUbFzDpjqqxWKi3oHXf", "PL1yp2HPgpRbPYNAAQGBAhTQAYEFgiT4n6", "PL1yp2HPgpRbPxRgZHVwhEZyClIBpTyDED", "PL1yp2HPgpRbNGZ802RTWSzH8iMXyIUrt3", "PL1yp2HPgpRbPPlir11gy0K5r8ejFvdlCl", "PL1yp2HPgpRbO7CNUEiKvz6fUBMbAjM64D", "PL1yp2HPgpRbMHWfxutKzLLxbaMVLz5Ao0", "PL1yp2HPgpRbO6_7h84RgWUUnIH7tvfqdU", "PL1yp2HPgpRbME2b9DSvT-Xj69cdaIvRic", "PL1yp2HPgpRbMF4KulyeuAveao6ohdGEff", "PL1yp2HPgpRbM-S9EX_4OSpywmc7G6kZ2m", "PL1yp2HPgpRbNnMzg0zXrRLQud846Zw9X1", "PL1yp2HPgpRbMvuNM8tjqC7zP7EG2-WiTv", "PL1yp2HPgpRbN6z_oz_VrznqrtKbAhd5rd", "PL1yp2HPgpRbOjYyOroeRwXEnR0Id5lnU0", "PL1yp2HPgpRbMnOsz3zEL8W7yirVdJiVlK", "PL1yp2HPgpRbMVsL1cs8alBS24sQmCxi3t", "PL1yp2HPgpRbOeGcmevZQvPj1Cy62bv899", "PL1yp2HPgpRbOxQf_vjt3hAr0wHDktCVbh", "PL1yp2HPgpRbN0UOY65UdPKuwWGZ-sJ3qf", "PL1yp2HPgpRbNZLgee4FoHL5bngdbUnCn0", "PL1yp2HPgpRbORJyyGk36ws4eUHfiRrqpP", "PL1yp2HPgpRbNLu8XhWTeijESLQGK4lcNB", "PL1yp2HPgpRbOJ4qV_pO4wBJb12CsGOLE7", "PL1yp2HPgpRbP39l7IC1_ol5mVKOXISYHe", "PL1yp2HPgpRbOd7g7QUrA9lNMl6HGjKNh_", "PL1yp2HPgpRbOkLLcPUF9XbuFGMDs2r5OY", "PL1yp2HPgpRbOBsBpqdgej11sSRKp8pwHd", "PL1yp2HPgpRbNMPL3vDwXZOGTS7usMoOWg", "PL1yp2HPgpRbNdQVvlEd5aOoF5h_AhGuSA", "PL1yp2HPgpRbOSHRIEDBH0gMSiDxxqd86O", "PL1yp2HPgpRbOq2jOX-2PRh9-90Fl1kKp6", "PL1yp2HPgpRbMgmWfgyLROdM0ZN41H9a0-", "PL1yp2HPgpRbOlLTMng61JZIyC75cj1_RM", "PL1yp2HPgpRbNcI3IS5McscaInJVb12Azw", "PL1yp2HPgpRbM24Elo-4wjDJz3D8xi9OGj", "PL1yp2HPgpRbNXcLwEwmk0Vc8pGJfzRPhy", "PL1yp2HPgpRbOhFHQZ540dYdKfvWCLozh9", "PL1yp2HPgpRbNTJlRfajWATf5X05SfoPVx", "PL1yp2HPgpRbMKPD2OBTKufbSRtjIbS7nu", "PL1yp2HPgpRbPIh8bV8gd1k4P7v3_5_jxP", "PL1yp2HPgpRbNHQJXLsNB9uYwZ3SDAM-H5", "PL1yp2HPgpRbO_NWFRhediSKWErR6luM0p", "PL1yp2HPgpRbNU9Cxi9fCGxMuEiz8kviaK", "PL1yp2HPgpRbOzyBO9te4NNGdrvqVqa2fR", "PL1yp2HPgpRbMoIeiKMdaqknJJg9qMFbMH", "PL1yp2HPgpRbOLgHkej_jcOOOhkL-KO8uE", "PL1yp2HPgpRbOmcd5cvZi06pOckavDd3td", "PL1yp2HPgpRbMa-OV3Ybo-TMj67MpPp6uT", "PL1yp2HPgpRbMQ9P9Vj9ya0Eo6SuiBYyPp", "PL1yp2HPgpRbO3e-GlFA8Zxk2z9Vnjz8sT", "PL1yp2HPgpRbO1Pagt7H_K4mPltye3-4jf", "PL1yp2HPgpRbMCI2KbIAkWhj1rcq-wX6JJ", "PL1yp2HPgpRbP5LLNAkRcuqDi8EQGKExof", "PL1yp2HPgpRbNMXZtvT97m4BVdq_z3f3Zw", "PL1yp2HPgpRbNQWCxtNA9UwsjIy5b68gMp", "PL1yp2HPgpRbP8dQ91d9yVXeLlA2B9fnwX", "PL1yp2HPgpRbOjdDwd3-LKm5I_SRhAnE0I", "PL1yp2HPgpRbM3qQW17ZaiXVQE3BiLLxOe", "PL1yp2HPgpRbMOJ1l1UNqx9BYYDuvl2wDy", "PL1yp2HPgpRbMF-XJn6SKSWiBue-1wuZlc", "PL1yp2HPgpRbN7G_NutOKMz_D-0ZVJubQv", "PL1yp2HPgpRbNh70Vi_72JvdiPcJp4jTBa", "PL1yp2HPgpRbNqcdCVcNz8KBXUDiz0NETD", "PL1yp2HPgpRbMmYErWhQGypy-BkuTZ0CzB", "PL1yp2HPgpRbOcMYuEy552JPmlPD9D7uwr", "PL1yp2HPgpRbPFq8MkRTfiGcftyVivW0gP", "PL1yp2HPgpRbMieSaKL059zxVWzFCSwLI9", "PL1yp2HPgpRbNF8VsMTeMpzYDcPw9vyThK", "PL1yp2HPgpRbNTLvVeoO2jPP0tURNkDPCR", "PL1yp2HPgpRbMHy44pCfGhelV3MJOzAADo", "PL1yp2HPgpRbPgfzUm_rg0A57MK9ZcX0qk", "PL1yp2HPgpRbND6k5M0_of7O1yCF5wN7h7", "PL1yp2HPgpRbOWDYN0nOlkfweU0vHT7Uqe", "PL1yp2HPgpRbP_x1oKNK42h9RmSAr3DPJU", "PL1yp2HPgpRbMUaMSe3AEqfBQ6EiWbPZJN", "PL1yp2HPgpRbMryd4UmHOdJXyuMZM60Xls", "PL1yp2HPgpRbNOXg9Y-GJp9p9L9yvscdjt", "PL1yp2HPgpRbOdsM3cTG8nrqV_G7mVjnM-", "PL1yp2HPgpRbOl5_KQ0vFAXhNTneTwBOfm", "PL1yp2HPgpRbNIbPPsGzY4c3f4ubJYNEWK", "PL1yp2HPgpRbNScVjJIn3IZMGdLH8xWfPF", "PL1yp2HPgpRbOCYZ03A3SnLvtgIqmM8hka", "PL1yp2HPgpRbOuT5mqBca15tp9wtOvIfUP", "PL1yp2HPgpRbMXtVXPyWDJ6fK-9TGSZZnd", "PL1yp2HPgpRbOH7fb27x2vlQpGtm14seyF", "PL1yp2HPgpRbPfltyGxbRNNSd1kzT5frAj", "PL1yp2HPgpRbNtS4TZiE1vds139COdzYIC", "PL1yp2HPgpRbNSi8-sFqzy20pBPqbi0r5x", "PL1yp2HPgpRbMbDVvcfZAZk_khFjWPzkFR", "PL1yp2HPgpRbMsqx3lsJxMSNnciOasmRVf", "PL1yp2HPgpRbMIayUR4_nYDV_Hg4XM9x9n", "PL1yp2HPgpRbMr-4VXPR2CrG2MfFC_TyS4", "PL1yp2HPgpRbMIeWSl1vD1E0-udTROMdr1", "PL1yp2HPgpRbOrfIjoFzosFom-w7vSrLV2", "PL1yp2HPgpRbM1Jbxyqsv8NFe4xn_TA37a", "PL1yp2HPgpRbNxJnosziZcD5lcaf1T8zJZ", "PL1yp2HPgpRbNdUOpHQrMMCU8NUXO9c_fK", "PL1yp2HPgpRbNrM54Bu3vYy0ZcZPFwm9xW", "PL1yp2HPgpRbPNsEEYGrpGYJYsE4eS7zsb", "PL1yp2HPgpRbMnPWtz4rHzRuOVbM18-ITz", "PL1yp2HPgpRbMg21-zgPTryGSWJIKZqRvf", "PL1yp2HPgpRbOs6EtPwGV0o51rxLzwKWAb", "PL1yp2HPgpRbNPPyWr0t5hB99OltY5IfZu", "PL1yp2HPgpRbM3qK6cirspT6fpf_W7dyEy", "PL1yp2HPgpRbPjAzBMP4hDNdNjddbs60vD", "PL1yp2HPgpRbNJcrlvL_YBUzs0ysQ_SoY_", "PL1yp2HPgpRbOJnbK4kiqsUnt90_oLvsKm", "PL1yp2HPgpRbOkOULkHgLjk6sLaNKH7xmg", "PL1yp2HPgpRbPDrsc1Chsu0NY4Q9UVuIJL", "PL1yp2HPgpRbO0pr7NMVP8RpUuh6B2bMQ8", "PL1yp2HPgpRbMPAeOn5RImPSVy7oCCBpyH", "PL1yp2HPgpRbOrL5Tr7HCYwfBQiKJBQbNf", "PL1yp2HPgpRbMlb6rPnB1xH3J3f5bDIBsa", "PL1yp2HPgpRbMGyGNFk5MVLd_7o84_2Bf3", "PL1yp2HPgpRbOqSwKYcp88EmzDSUbprc7D", "PL1yp2HPgpRbMPzH5RwxTLfR4byMuAJt5k", "PL1yp2HPgpRbNkTVHpC_kqObJiPxpMk3O6", "PL1yp2HPgpRbMEt1ZoIBQzsU2xwESMqvAG", "PL1yp2HPgpRbMh31hA2UU2A6qtE5Arit3i", "PL1yp2HPgpRbOTu6NahZG_kiSmiuSekiIr", "PL1yp2HPgpRbNZR75yeuokZOvRBJHkbiba", "PL1yp2HPgpRbN-yKAcpkgnvoxvuceiH2rK", "PL1yp2HPgpRbPzKnprqJ5V0dSFFM5rkmCg", "PL1yp2HPgpRbMNBNHodJ-go_ZpaB-gKNXe"];
+const KEY='ekzeget-plan-v1';
+let state={};
+try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const clean=t=>t.replace(/\s+/g,' ').replace(/\.\s*$/,'').trim();
+const url=t=>'https://www.youtube.com/@Ekzeget_Bible/search?query='+encodeURIComponent(clean(t));
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const vids=n=>n===1?'1 video':n.toLocaleString('en')+' videos';
+let uid=0;
+const root=document.getElementById('plan');
+root.innerHTML=plan.map((st,si)=>`
+ <section data-s="${si}">
+  <div class="shead"><h2><span>${st.num}</span>${st.name}</h2>${st.extra?'':`<span class="scount" id="sc${si}"></span>`}</div>
+  ${st.note?`<p class="note">${st.note}</p>`:''}
+  <div class="books">${st.books.map(([en,ru,...pls])=>`
+   <div class="book"><div class="bname">${en}<small>${ru}</small></div>
+    <div class="pls">${pls.map(p=>{const ix=uid;const id='c'+(uid++);p.id=id;p.u=(IDS.length===164&&IDS[ix])?'https://www.youtube.com/playlist?list='+IDS[ix]:url(p.t);return `
+     <div class="pl${state[p.t]?' on':''}" id="row-${id}">
+      <input type="checkbox" id="${id}" data-t="${esc(p.t)}"${state[p.t]?' checked':''}>
+      <label for="${id}"><span class="who">${p.s}</span> <span class="n">· ${vids(p.n)}</span><span class="t">${esc(clean(p.t))}</span></label>
+      ${IDS[ix]?`<button class="play" type="button" data-list="${IDS[ix]}">▶ Play</button>`:`<a href="${p.u}" target="_blank" rel="noopener">Open</a>`}
+     </div>`}).join('')}
+     ${pls.length===1&&!st.extra&&st.num!=='Alongside'?'<span class="none">No second speaker on the channel for this book.</span>':''}
+    </div></div>`).join('')}</div>
+ </section>`).join('');
+function update(){
+  let P=0,PD=0,V=0,VD=0;
+  plan.forEach((st,si)=>{ if(st.extra) return;
+    let p=0,pd=0;
+    st.books.forEach(([,,...pls])=>pls.forEach(x=>{p++;P++;V+=x.n;if(state[x.t]){pd++;PD++;VD+=x.n}}));
+    const el=document.getElementById('sc'+si); if(el) el.textContent=`${pd} / ${p} done`;
+  });
+  document.getElementById('pDone').textContent=PD;document.getElementById('pAll').textContent=P;
+  document.getElementById('vDone').textContent=VD.toLocaleString('en');document.getElementById('vAll').textContent=V.toLocaleString('en');
+  const pc=V?Math.round(VD/V*1000)/10:0;
+  document.getElementById('pct').textContent=pc+'%';document.getElementById('barAll').style.width=pc+'%';
+}
+root.addEventListener('change',e=>{const t=e.target.dataset.t;if(t==null)return;
+  if(e.target.checked)state[t]=1;else delete state[t];
+  e.target.closest('.pl').classList.toggle('on',e.target.checked);save();update();});
+const box=document.getElementById('resetBox');
+box.addEventListener('click',e=>{
+  if(e.target.id==='reset'){box.innerHTML='<span class="confirm">Clear every tick? <button id="yes" type="button">Yes, clear</button><button id="no" type="button">Cancel</button></span>';}
+  else if(e.target.id==='yes'){state={};save();document.querySelectorAll('.pl input').forEach(i=>{i.checked=false;i.closest('.pl').classList.remove('on')});update();box.innerHTML='<button id="reset" type="button">Clear all ticks</button>';}
+  else if(e.target.id==='no'){box.innerHTML='<button id="reset" type="button">Clear all ticks</button>';}
+});
+root.addEventListener('click',e=>{const b=e.target.closest('.play');if(!b)return;
+  const book=b.closest('.book');const was=b.classList.contains('on');
+  document.querySelectorAll('.player').forEach(x=>x.remove());document.querySelectorAll('.play.on').forEach(x=>{x.classList.remove('on');x.textContent='▶ Play'});
+  if(was)return;
+  b.classList.add('on');b.textContent='■ Close';
+  const id=b.dataset.list;const d=document.createElement('div');d.className='player';
+  d.innerHTML='<div class="frame"><iframe src="https://www.youtube.com/embed/videoseries?list='+id+'&autoplay=1&rel=0" title="Playlist player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><div class="pnote"><span>If the player doesn't load, open the playlist on YouTube instead.</span><a href="https://www.youtube.com/playlist?list='+id+'" target="_blank" rel="noopener">Open on YouTube</a></div>';
+  book.appendChild(d);d.scrollIntoView({block:'nearest',behavior:'smooth'});});
+update();
+</script>
+
+</html>

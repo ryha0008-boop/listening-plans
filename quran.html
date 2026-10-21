@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quran Listening Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+<style>
+html,body{margin:0}
+/* Layout: the same single checklist column as the Bible plan; progress is counted in ayahs, the Quran's own unit */
+:root{
+  --bg:#f5f7f5; --surface:#ffffff; --fg:#1b2420; --muted:#5f6d67; --line:#dbe3df;
+  --accent:#1d6a58; --accent-soft:#dcebe6; --done:#1d6a58; --warn:#8a5a12; --warn-soft:#f6ecd9;
+  --display:"PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211e; --fg:#e6eeea; --muted:#9aaba4; --line:#2c3a35;
+  --accent:#5fc0a6; --accent-soft:#1d3a33; --done:#5fc0a6; --warn:#e2b46a; --warn-soft:#3a2f1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211e; --fg:#e6eeea; --muted:#9aaba4; --line:#2c3a35;
+  --accent:#5fc0a6; --accent-soft:#1d3a33; --done:#5fc0a6; --warn:#e2b46a; --warn-soft:#3a2f1c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.15}
+.lede{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.callout{background:var(--warn-soft);color:var(--fg);border-left:3px solid var(--warn);padding:10px 14px;font-size:14px;max-width:70ch}
+.callout b{color:var(--warn)}
+.overall{display:flex;flex-direction:column;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;
+  background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.stats b{color:var(--fg)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+section{display:flex;flex-direction:column;gap:10px}
+.shead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.shead h2{font-size:22px}
+.shead h2 span{color:var(--accent);font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--body);font-weight:700;margin-right:8px}
+.scount{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:14px;margin:0;max-width:62ch}
+.books{border-top:1px solid var(--line)}
+.book{display:grid;grid-template-columns:170px 1fr;gap:6px 16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.bname{font-weight:700;min-width:0}
+.bname .no{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:6px}
+.bname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.pls{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pl{display:flex;align-items:center;gap:10px;min-width:0}
+.pl input{width:18px;height:18px;accent-color:var(--accent);flex:none;margin:0}
+.pl label{flex:1;min-width:0;cursor:pointer}
+.pl .who{font-weight:700}
+.pl .t{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.pl.on .who,.pl.on .t{text-decoration:line-through;text-decoration-color:var(--muted)}
+.pl.on .who{color:var(--done)}
+.pl a{flex:none;font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--accent-soft);
+  background:var(--accent-soft);padding:3px 10px;border-radius:4px;font-weight:700}
+.pl a:hover{border-color:var(--accent)}
+.play{font:inherit;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-soft);padding:3px 10px;border-radius:4px;cursor:pointer;font-variant-numeric:tabular-nums}
+.play:hover{border-color:var(--accent)}
+.play.now{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.bar-player{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.08);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-player .in{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.bar-player .np{font-size:13px;color:var(--muted)}
+.bar-player .np b{color:var(--fg)}
+.bar-player audio{width:100%}
+body{padding-bottom:120px}
+.lk{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:55%;flex:none}
+@media (max-width:560px){.pl{flex-wrap:wrap}.lk{max-width:100%;justify-content:flex-start;padding-left:28px}}
+a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.foot{color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.foot button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer}
+.confirm{display:inline-flex;gap:8px;align-items:center}
+@media (max-width:560px){.book{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Коран: перевод смыслов</h1>
+    <p class="lede">All 114 surahs in a beginner-friendly order. For each surah, first play Elmir Kuliev's Russian translation read by Khalyaf Dzhafarov, then the Tafsir as-Sa'di commentary in Kuliev's Russian translation. Every <b>Play</b> button plays the recording in the player at the bottom of the page. Longer commentaries are split into parts labelled by ayah range, and the player moves on to the next part by itself.</p>
+  </header>
+  <p class="callout"><b>About the recordings.</b> Both audio sets come from Musulmanin.com, published by the Ummah publishing house. The commentary is the full Tafsir as-Sa'di, a widely used classical Sunni commentary; the site doesn't name its narrator. Al-Fatiha and Al-Baqarah also have an optional video tafsir as a second voice.</p>
+  <div class="overall" aria-live="polite">
+    <div class="stats"><span><b id="sDone">0</b> of 114 surahs complete</span><span><b id="aDone">0</b> of <b>6,236</b> ayahs</span><span id="pct">0%</span></div>
+    <div class="bar"><i id="barAll"></i></div>
+  </div>
+  <div id="plan"></div>
+  <div class="bar-player"><div class="in"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><audio id="au" controls preload="none"></audio></div></div>
+  <div class="foot">
+    <span>Your ticks are saved in this browser only. A surah counts as complete when its translation and commentary are both ticked.</span>
+    <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
+  </div>
+</div>
+
+<script>
+const S=[["Аль-Фатиха","Al-Fatiha",7],["Аль-Бакара","Al-Baqarah",286],["Аль Имран","Al Imran",200],["Ан-Ниса","An-Nisa",176],["Аль-Маида","Al-Ma'idah",120],["Аль-Анам","Al-An'am",165],["Аль-Араф","Al-A'raf",206],["Аль-Анфаль","Al-Anfal",75],["Ат-Тауба","At-Tawbah",129],["Юнус","Yunus",109],["Худ","Hud",123],["Юсуф","Yusuf",111],["Ар-Рад","Ar-Ra'd",43],["Ибрахим","Ibrahim",52],["Аль-Хиджр","Al-Hijr",99],["Ан-Нахль","An-Nahl",128],["Аль-Исра","Al-Isra",111],["Аль-Кахф","Al-Kahf",110],["Марьям","Maryam",98],["Та Ха","Ta-Ha",135],["Аль-Анбийа","Al-Anbiya",112],["Аль-Хаджж","Al-Hajj",78],["Аль-Муминун","Al-Mu'minun",118],["Ан-Нур","An-Nur",64],["Аль-Фуркан","Al-Furqan",77],["Аш-Шуара","Ash-Shu'ara",227],["Ан-Намль","An-Naml",93],["Аль-Касас","Al-Qasas",88],["Аль-Анкабут","Al-Ankabut",69],["Ар-Рум","Ar-Rum",60],["Лукман","Luqman",34],["Ас-Саджда","As-Sajdah",30],["Аль-Ахзаб","Al-Ahzab",73],["Саба","Saba",54],["Фатыр","Fatir",45],["Йа Син","Ya-Sin",83],["Ас-Саффат","As-Saffat",182],["Сад","Sad",88],["Аз-Зумар","Az-Zumar",75],["Гафир","Ghafir",85],["Фуссылат","Fussilat",54],["Аш-Шура","Ash-Shura",53],["Аз-Зухруф","Az-Zukhruf",89],["Ад-Духан","Ad-Dukhan",59],["Аль-Джасия","Al-Jathiyah",37],["Аль-Ахкаф","Al-Ahqaf",35],["Мухаммад","Muhammad",38],["Аль-Фатх","Al-Fath",29],["Аль-Худжурат","Al-Hujurat",18],["Каф","Qaf",45],["Аз-Зарийат","Adh-Dhariyat",60],["Ат-Тур","At-Tur",49],["Ан-Наджм","An-Najm",62],["Аль-Камар","Al-Qamar",55],["Ар-Рахман","Ar-Rahman",78],["Аль-Вакиа","Al-Waqi'ah",96],["Аль-Хадид","Al-Hadid",29],["Аль-Муджадала","Al-Mujadilah",22],["Аль-Хашр","Al-Hashr",24],["Аль-Мумтахана","Al-Mumtahanah",13],["Ас-Сафф","As-Saff",14],["Аль-Джумуа","Al-Jumu'ah",11],["Аль-Мунафикун","Al-Munafiqun",11],["Ат-Тагабун","At-Taghabun",18],["Ат-Талак","At-Talaq",12],["Ат-Тахрим","At-Tahrim",12],["Аль-Мульк","Al-Mulk",30],["Аль-Калам","Al-Qalam",52],["Аль-Хакка","Al-Haqqah",52],["Аль-Мааридж","Al-Ma'arij",44],["Нух","Nuh",28],["Аль-Джинн","Al-Jinn",28],["Аль-Муззаммиль","Al-Muzzammil",20],["Аль-Муддассир","Al-Muddaththir",56],["Аль-Кийама","Al-Qiyamah",40],["Аль-Инсан","Al-Insan",31],["Аль-Мурсалат","Al-Mursalat",50],["Ан-Наба","An-Naba",40],["Ан-Назиат","An-Nazi'at",46],["Абаса","Abasa",42],["Ат-Таквир","At-Takwir",29],["Аль-Инфитар","Al-Infitar",19],["Аль-Мутаффифин","Al-Mutaffifin",36],["Аль-Иншикак","Al-Inshiqaq",25],["Аль-Бурудж","Al-Buruj",22],["Ат-Тарик","At-Tariq",17],["Аль-Ала","Al-A'la",19],["Аль-Гашийа","Al-Ghashiyah",26],["Аль-Фаджр","Al-Fajr",30],["Аль-Балад","Al-Balad",20],["Аш-Шамс","Ash-Shams",15],["Аль-Лайль","Al-Layl",21],["Ад-Духа","Ad-Duha",11],["Аш-Шарх","Ash-Sharh",8],["Ат-Тин","At-Tin",8],["Аль-Алак","Al-Alaq",19],["Аль-Кадр","Al-Qadr",5],["Аль-Баййина","Al-Bayyinah",8],["Аз-Зальзала","Az-Zalzalah",8],["Аль-Адийат","Al-Adiyat",11],["Аль-Кариа","Al-Qari'ah",11],["Ат-Такасур","At-Takathur",8],["Аль-Аср","Al-Asr",3],["Аль-Хумаза","Al-Humazah",9],["Аль-Филь","Al-Fil",5],["Курайш","Quraysh",4],["Аль-Маун","Al-Ma'un",7],["Аль-Каусар","Al-Kawthar",3],["Аль-Кафирун","Al-Kafirun",6],["Ан-Наср","An-Nasr",3],["Аль-Масад","Al-Masad",5],["Аль-Ихлас","Al-Ikhlas",4],["Аль-Фалак","Al-Falaq",5],["Ан-Нас","An-Nas",6]];
+const range=(a,b)=>{const r=[];if(a>b){for(let i=a;i>=b;i--)r.push(i)}else{for(let i=a;i<=b;i++)r.push(i)}return r};
+const stages=[
+ {num:'Stage 1',name:'The Opening and the short surahs',note:'Al-Fatiha first, then the 30th part (juz Amma) from the shortest surahs upward. These are the surahs most Muslims learn first.',list:[1,...range(114,78)]},
+ {num:'Stage 2',name:'Well-known surahs and prophets\' stories',note:'Narrative surahs about Yusuf, Maryam, Musa and others, plus surahs often recited on their own.',list:[12,19,18,20,36,55,56,67,14,21,28,71,11,10]},
+ {num:'Stage 3',name:'The two long Medinan surahs',note:'Al-Baqarah has a verified Russian lesson series (verses 1 to 189).',list:[2,3]},
+ {num:'Stage 4',name:'Other Medinan surahs',note:'Surahs revealed in Medina, dealing with community life, law and the early Muslim state.',list:[4,5,8,9,24,33,47,48,49,...range(57,66)]},
+];
+const used=new Set(stages.flatMap(s=>s.list));
+stages.push({num:'Stage 5',name:'The remaining surahs',note:'Everything not covered above, in the order of the Quran.',list:range(1,114).filter(n=>!used.has(n))});
+
+const SAADI='001 002_001-011 002_012-023 002_024-032 002_033-046 002_047-073 002_074-087 002_088-104 002_105-119 002_120-135 002_136-141 002_142-147 002_148-156 002_157-164 002_165-175 002_176-182 002_183-194 002_194-199 002_200-212 002_213-219 002_220-228 002_229-236 002_237-252 002_253-259 002_260-273 002_274-286 003_001-025 003_026-054 003_055-082 003_083-112 003_112-134 003_134-152 003_153-165 003_166-184 003_185-200 004_001-010 004_011-012 004_013-023 004_024-034 004_035-044 004_045-062 004_063-075 004_076-083 004_084-093 004_094-101 004_102-111 004_112-132 004_133-143 004_144-162 004_163-176 005_001-004 005_005-013 005_014-031 005_032-048 005_049-063 005_064-084 005_085-100 005_101-120 006_001-019 006_020-041 006_042-061 006_062-081 006_082-096 006_097-109 006_110-125 006_126-140 006_141-150 006_151-165 007_001-027 007_028-043 007_044-059 007_060-079 007_080-101 007_102-135 007_136-153 007_154-168 007_169-187 007_188-206 008_01-23 008_24-40 008_41-59 008_60-75 009_001-020 009_021-031 009_032-043 009_044-061 009_062-079 009_080-099 009_100-111 009_112-129 010_001-017 010_018-033 010_034-057 010_058-078 010_079-109 011_001-020 011_021-048 011_049-073 011_074-095 011_096-123 012_001-025 012_026-046 012_047-076 012_077-106 012_107-111 013_01-14 013_15-30 013_31-43 014_01-15 014_16-33 014_34-52 015_01-48 015_49-99 016_001-027 016_028-055 016_056-080 016_081-097 016_098-128 017_001-023 017_024-044 017_045-065 017_066-087 017_088-111 018_001-020 018_021-036 018_037-054 018_055-081 018_082-088 018_089-110 019_01-29 019_30-50 019_51-68 019_69-98 020_001-032 020_033-063 020_064-085 020_086-114 020_115-135 021_001-020 021_021-035 021_036-051 021_052-086 021_087-112 022_01-18 022_19-39 022_40-58 022_59-78 023_001-026 023_027-056 023_057-083 023_084-118 024_01-24 024_25-35 024_36-52 024_53-64 025_01-18 025_19-40 025_41-62 025_63-77 026_001-042 026_043-113 026_114-185 026_186-227 027_01-20 027_21-43 027_44-65 027_66-93 028_01-25 028_26-50 028_51-68 028_69-88 029_01-23 029_24-45 029_46-69 030_01-31 030_32-60 031_01-18 031_19-34 032 033_01-18 033_19-36 033_37-49 033_50-73 034_01-19 034_20-36 034_37-54 035_01-23 035_24-45 036_01-39 036_40-83 037_001-060 037_061-126 037_127-182 038_01-40 038_41-88 039_01-16 039_17-35 039_36-58 039_59-75 040_01-15 040_16-33 040_34-60 040_61-85 041_01-31 041_32-54 042_01-23 042_24-53 043_01-45 043_46-89 044 045 046_01-16 046_17-35 047_01-19 047_20-38 048_01-24 048_25-29 049 050 051_01-36 051_37-60 052 053_01-28 053_29-62 054 055 056_01-61 056_62-96 057_01-18 057_19-29 058 059_01-10 059_11-24 060 061 062 063 064 065 066 067 068 069 070 071 072 073 074 075 076 077 078 079 080 081 082 083 084 085 086 087 088 089 090 091 092 093 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114'.split(' ').reduce((m,f)=>{const n=+f.slice(0,3);(m[n]=m[n]||[]).push(f);return m},{});
+const pad=n=>String(n).padStart(3,'0');
+const TR=n=>'https://s2.musulmanin.com/quran-rus/quran-rus/'+pad(n)+'.mp3';
+const SA=f=>'https://s2.musulmanin.com/audio_knigi/tafsir_saadi/'+f+'.mp3';
+const partLabel=f=>{const r=f.split('_')[1];return r?r.split('-').map(x=>+x).join('–'):'Play'};
+const extra={1:{u:'https://azan.info/durus/video/2-urok-tolkovanie-suryi-al-fatiha-447',t:'Video lesson by Ersin Amire Abu Yusuf (azan.info). Optional.'},
+ 2:{u:'https://azan.info/durus/video-main/tafsir-Korana-44',t:'Video lessons by Ersin Amire Abu Yusuf on verses 1–189 (azan.info). Optional.'}};
+const KEY='quran-plan-v1';
+let state={};
+try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const items=n=>{const parts=SAADI[n]||[];const L=[
+  {k:n+'t',who:'Перевод · Халяф Джафаров',t:'Kuliev translation, read aloud',links:[{u:TR(n),l:'Play'}]},
+  {k:n+'c',who:'Тафсир ас-Саади',t:parts.length>1?'Commentary in '+parts.length+' parts, by ayah range':'Commentary, one recording',links:parts.map(f=>({u:SA(f),l:parts.length>1?partLabel(f):'Play'}))}];
+  if(extra[n])L.push({k:n+'x',who:'Видео-тафсир · Ерсин Амире',t:extra[n].t,links:[{u:extra[n].u,l:'Watch'}],opt:true});
+  return L};
+const root=document.getElementById('plan');
+root.innerHTML=stages.map((st,si)=>`
+ <section>
+  <div class="shead"><h2><span>${st.num}</span>${st.name}</h2><span class="scount" id="sc${si}"></span></div>
+  <p class="note">${st.note}</p>
+  <div class="books">${st.list.map(n=>{const [ru,en,a]=S[n-1];return `
+   <div class="book"><div class="bname"><span class="no">${n}</span>${en}<small>${ru} · ${a} ${a===1?'ayah':'ayahs'}</small></div>
+    <div class="pls">${items(n).map(p=>`
+     <div class="pl${state[p.k]?' on':''}">
+      <input type="checkbox" id="c${p.k}" data-k="${p.k}"${state[p.k]?' checked':''}>
+      <label for="c${p.k}"><span class="who">${p.who}</span><span class="t">${p.t}</span></label>
+      <span class="lk">${p.links.map((x,j)=>/\.mp3$/.test(x.u)?`<button class="play" type="button" data-src="${x.u}" data-k="${p.k}" data-j="${j}" data-name="${S[n-1][1]} · ${p.who.split(' · ')[0]}${p.links.length>1?' · '+x.l:''}">▶ ${x.l==='Play'?'Play':x.l}</button>`:`<a href="${x.u}" target="_blank" rel="noopener">${x.l}</a>`).join('')}</span>
+     </div>`).join('')}</div></div>`}).join('')}</div>
+ </section>`).join('');
+const full=n=>state[n+'t']&&state[n+'c'];
+function update(){
+  let SD=0,AD=0;
+  stages.forEach((st,si)=>{let d=0;st.list.forEach(n=>{if(full(n)){d++;SD++;AD+=S[n-1][2]}});
+    document.getElementById('sc'+si).textContent=`${d} / ${st.list.length} surahs`;});
+  document.getElementById('sDone').textContent=SD;
+  document.getElementById('aDone').textContent=AD.toLocaleString('en');
+  const pc=Math.round(AD/6236*1000)/10;
+  document.getElementById('pct').textContent=pc+'%';document.getElementById('barAll').style.width=pc+'%';
+}
+root.addEventListener('change',e=>{const k=e.target.dataset.k;if(k==null)return;
+  if(e.target.checked)state[k]=1;else delete state[k];
+  e.target.closest('.pl').classList.toggle('on',e.target.checked);save();update();});
+const box=document.getElementById('resetBox');
+box.addEventListener('click',e=>{
+  if(e.target.id==='reset'){box.innerHTML='<span class="confirm">Clear every tick? <button id="yes" type="button">Yes, clear</button><button id="no" type="button">Cancel</button></span>';}
+  else if(e.target.id==='yes'){state={};save();document.querySelectorAll('.pl input').forEach(i=>{i.checked=false;i.closest('.pl').classList.remove('on')});update();box.innerHTML='<button id="reset" type="button">Clear all ticks</button>';}
+  else if(e.target.id==='no'){box.innerHTML='<button id="reset" type="button">Clear all ticks</button>';}
+});
+const au=document.getElementById('au'),np=document.getElementById('np');let cur=null;
+function playBtn(b){document.querySelectorAll('.play.now').forEach(x=>x.classList.remove('now'));cur=b;b.classList.add('now');
+  au.src=b.dataset.src;np.innerHTML='Now playing: <b></b>';np.querySelector('b').textContent=b.dataset.name;
+  au.play().catch(()=>{np.innerHTML='Could not start this recording. Check your connection, then press play again.'});}
+root.addEventListener('click',e=>{const b=e.target.closest('.play');if(!b)return;
+  if(cur===b&&!au.paused){au.pause();return}if(cur===b&&au.src){au.play();return}playBtn(b);});
+au.addEventListener('ended',()=>{if(!cur)return;const nx=cur.nextElementSibling;
+  if(nx&&nx.classList.contains('play')){playBtn(nx);return}
+  cur.classList.remove('now');np.textContent='Finished. Tick the box if you are done with it.';});
+au.addEventListener('error',()=>{if(au.src)np.textContent='This recording could not be loaded. The site may be down; try again later.'});
+update();
+</script>
+
+</html>
