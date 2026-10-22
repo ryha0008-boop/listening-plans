@@ -64,6 +64,28 @@ section{display:flex;flex-direction:column;gap:8px}
 .opt select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
 .player audio{width:100%}
 .foot{color:var(--muted);font-size:13px}
+.ctools{gap:6px 10px}
+.rate{display:inline-flex;gap:4px}
+.rate button,.askbtn,.ask button,.qs button{font:inherit;font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.rate button[data-l="ru"].on{background:var(--rubric);border-color:var(--rubric);color:#fff}
+.rate button[data-l="en"].on{background:var(--en);border-color:var(--en);color:#fff}
+.rate button[data-l="lt"].on{background:var(--lt);border-color:var(--lt);color:#fff}
+.askbtn{color:var(--rubric)}
+.qbtn{font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;background:var(--rubric);color:#fff;text-decoration:none}
+.ask{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px;max-height:45vh;overflow:auto}
+.askrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ask input,.ask textarea{font:inherit;font-size:14px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+.ask textarea{flex:1 1 240px;min-width:0;resize:vertical}
+.ask .primary{background:var(--rubric);border-color:var(--rubric);color:#fff}
+.qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.qs li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:6px;font-size:14px}
+.qs .ref{font-weight:700;color:var(--rubric);font-variant-numeric:tabular-nums}
+.qs .qt{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
+.qs .acts{display:inline-flex;gap:4px}
+.ch{position:relative}
+.ch[data-best]::after{content:"";position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%}
+.ch[data-best="ru"]::after{background:var(--rubric)}.ch[data-best="en"]::after{background:var(--en)}.ch[data-best="lt"]::after{background:var(--lt)}
+.ch.hasq{font-weight:700;text-decoration:underline dotted}
 @media (max-width:560px){.book{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
@@ -79,6 +101,9 @@ section{display:flex;flex-direction:column;gap:8px}
     <div class="bar"><i id="barAll"></i></div>
   </div>
   <div id="plan"></div>
+  <section class="mynotes"><div class="shead"><h2><span>Notes</span>My questions</h2><span class="scount" id="rateStats"></span></div>
+    <p class="note" id="qsEmpty">While a chapter plays, tap <b>? Ask about this chapter</b> in the player to save a question. Your questions collect here, each with a button to ask Claude.</p>
+    <ul class="qs" id="allQs"></ul></section>
   <p class="missing">Not included: Tobit, Judith, Wisdom of Solomon, Sirach, Baruch, the Letter of Jeremiah, 1–3 Maccabees and 2–3 Ezra, and Daniel 13–14. They are part of the Orthodox Bible, but no chapter-by-chapter recording of them exists on either site.</p>
   <p class="foot">Russian: Synodal translation, read by Alexander Kabilov (azbyka.ru: New Testament, Genesis, Song of Songs) and Alexander Bondarenko (allbible.info: rest of the Old Testament). English: World English Bible (public domain), read by Winfred Henson (ebible.org). Lithuanian: the New World Translation (Naujojo pasaulio vertimas), published by Jehovah's Witnesses (jw.org); it is not a translation used by the Orthodox, Catholic or Lutheran churches. Psalms follow the Russian numbering; the English and Lithuanian readings switch to the matching psalm in their numbering. Your progress is saved in this browser.</p>
 </div>
@@ -91,6 +116,17 @@ section{display:flex;flex-direction:column;gap:8px}
     <label class="opt">Languages <select id="langs"><option value="ru,en,lt">Russian, English, Lithuanian</option><option value="lt,ru,en">Lithuanian, Russian, English</option><option value="ru,en">Russian, English</option><option value="ru,lt">Russian, Lithuanian</option><option value="en,lt">English, Lithuanian</option><option value="ru">Russian only</option><option value="en">English only</option><option value="lt">Lithuanian only</option></select></label>
     <label class="opt">Then <select id="mode"><option value="next">keep going</option><option value="book">stop at end of book</option><option value="stop">stop after this chapter</option></select></label>
   </div>
+  <div class="row ctools" id="ctools" hidden>
+    <span class="opt">Understood best:</span>
+    <span class="rate" id="rate"><button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button><button type="button" data-l="lt">LT</button></span>
+    <button type="button" class="askbtn" id="askOpen">? Ask about this chapter</button>
+  </div>
+  <form class="ask" id="ask" hidden>
+    <div class="askrow"><label class="opt" for="askVerse">Verse</label><input id="askVerse" inputmode="numeric" placeholder="e.g. 5" size="4">
+      <textarea id="askText" rows="2" placeholder="Your question, in any language"></textarea></div>
+    <div class="askrow"><button type="submit" class="primary">Save and ask Claude</button><button type="button" id="askSave">Save only</button><button type="button" id="askClose">Close</button></div>
+    <ul class="qs" id="chapterQs"></ul>
+  </form>
   <audio id="au" controls preload="none"></audio>
 </div></div>
 
@@ -194,7 +230,10 @@ let heard=store.get('bib2-heard',{});          // "Mark|3" -> 1
 let kinds=store.get('bib2-engkind',{});        // book -> index of the English file pattern that worked
 const langsEl=document.getElementById('langs'),modeEl=document.getElementById('mode');
 langsEl.value=store.get('bib3-langs','ru,en,lt');modeEl.value=store.get('bib2-mode','next');
-langsEl.onchange=()=>store.set('bib3-langs',langsEl.value);modeEl.onchange=()=>store.set('bib2-mode',modeEl.value);
+langsEl.onchange=()=>{store.set('bib3-langs',langsEl.value);
+  if(!chip||!queue.length)return;const cur=queue[qi];const bk=BOOK[chip.dataset.book];const fresh=tracksFor(bk,+chip.dataset.c);
+  const done=new Set(queue.slice(0,qi).map(t=>t.lang));const rest=fresh.filter(t=>!done.has(t.lang)&&(!cur||t.lang!==cur.lang));
+  queue=cur?[cur,...rest]:rest;qi=0;if(cur)showNow(cur);};modeEl.onchange=()=>store.set('bib2-mode',modeEl.value);
 
 /* ---------- Render ---------- */
 const root=document.getElementById('plan');const BOOK={};
@@ -253,6 +292,44 @@ if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttra
 (function(){const last=store.get('bib2-last',null);if(!last)return;const [bk,c]=last.split('|');const b=allChips.find(x=>x.dataset.book===bk&&x.dataset.c===c);if(!b)return;
   np.innerHTML='Last time: <b></b> · <button type="button" id="resume">Resume</button>';np.querySelector('b').textContent=BOOK[bk].en+' '+c+' · '+BOOK[bk].ru;
   document.getElementById('resume').onclick=()=>startChapter(b);})();
+
+/* ---------- Understood best + questions ---------- */
+let best=store.get('bib3-best',{});      // "Mark|3" -> 'ru'|'en'|'lt'
+let qs=store.get('bib3-qs',[]);          // [{book,c,v,q,t}]
+const rateEl=document.getElementById('rate'),ctools=document.getElementById('ctools'),askF=document.getElementById('ask');
+const keyOf=b=>b.dataset.book+'|'+b.dataset.c;
+function paintChips(){allChips.forEach(b=>{const k=keyOf(b);if(best[k])b.dataset.best=best[k];else delete b.dataset.best;b.classList.toggle('hasq',qs.some(q=>q.book+'|'+q.c===k))})}
+function paintRate(){if(!chip)return;const v=best[keyOf(chip)];rateEl.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.l===v))}
+rateEl.addEventListener('click',e=>{const x=e.target.closest('button');if(!x||!chip)return;const k=keyOf(chip);best[k]=best[k]===x.dataset.l?undefined:x.dataset.l;if(!best[k])delete best[k];
+  store.set('bib3-best',best);paintRate();paintChips();rateStats();});
+function rateStats(){const c={ru:0,en:0,lt:0};Object.values(best).forEach(v=>c[v]=(c[v]||0)+1);const n=c.ru+c.en+c.lt;
+  document.getElementById('rateStats').textContent=n?'Understood best: RU '+c.ru+' · EN '+c.en+' · LT '+c.lt:'';}
+const SRC={ru:'Russian Synodal',en:'English World English Bible',lt:'Lithuanian New World Translation'};
+function prompt(q){const bk=BOOK[q.book];return 'I am listening to the Bible chapter by chapter in Russian (Synodal), English (World English Bible) and Lithuanian. '+
+  'This is about '+bk.en+' chapter '+q.c+(q.v?', verse '+q.v:'')+' ('+bk.ru+' '+q.c+(q.v?':'+q.v:'')+'). '+
+  'Please explain clearly and simply, note if the translations differ here, and mention how the Orthodox Church traditionally understands it. My question: '+q.q;}
+function claudeUrl(q){return 'https://claude.ai/new?q='+encodeURIComponent(prompt(q))}
+function copy(text,btn){const done=()=>{const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1500)};
+  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done,()=>{});}
+function qItem(q,i){return `<li><span class="ref">${esc(BOOK[q.book].en)} ${q.c}${q.v?':'+esc(q.v):''}</span><span class="qt"></span><span class="acts">
+  <a class="qbtn" href="${claudeUrl(q)}" target="_blank" rel="noopener">Ask Claude</a><button type="button" data-copy="${i}">Copy</button><button type="button" data-del="${i}">Delete</button></span></li>`}
+function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function renderQs(){const all=document.getElementById('allQs');all.innerHTML=qs.map(qItem).join('');all.querySelectorAll('.qt').forEach((el,i)=>el.textContent=qs[i].q);
+  document.getElementById('qsEmpty').hidden=qs.length>0;
+  const cl=document.getElementById('chapterQs');if(chip){const k=keyOf(chip);const idx=qs.map((q,i)=>[q,i]).filter(([q])=>q.book+'|'+q.c===k);
+    cl.innerHTML=idx.map(([q,i])=>qItem(q,i)).join('');cl.querySelectorAll('.qt').forEach((el,j)=>el.textContent=idx[j][0].q)}
+  paintChips();}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c){copy(prompt(qs[+c.dataset.copy]),c);return}
+  const d=e.target.closest('[data-del]');if(d){qs.splice(+d.dataset.del,1);store.set('bib3-qs',qs);renderQs()}});
+function saveQ(){const text=document.getElementById('askText').value.trim();if(!text||!chip)return null;
+  const q={book:chip.dataset.book,c:+chip.dataset.c,v:document.getElementById('askVerse').value.trim(),q:text,t:Date.now()};qs.push(q);store.set('bib3-qs',qs);
+  document.getElementById('askText').value='';document.getElementById('askVerse').value='';renderQs();return q;}
+askF.addEventListener('submit',e=>{e.preventDefault();const q=saveQ();if(q)window.open(claudeUrl(q),'_blank','noopener')});
+document.getElementById('askSave').onclick=()=>saveQ();
+document.getElementById('askOpen').onclick=()=>{askF.hidden=!askF.hidden;if(!askF.hidden){renderQs();document.getElementById('askText').focus()}};
+document.getElementById('askClose').onclick=()=>{askF.hidden=true};
+const _start=startChapter;startChapter=function(b){_start(b);ctools.hidden=false;paintRate();if(!askF.hidden)renderQs();};
+renderQs();rateStats();
 update();
 </script>
 </body>
