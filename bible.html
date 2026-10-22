@@ -55,6 +55,7 @@ section{display:flex;flex-direction:column;gap:8px}
 .player .row{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
 .np{flex:1 1 260px;min-width:0;font-size:13px;color:var(--muted)}
 .np b{color:var(--fg)}
+.np .up{color:var(--muted);font-size:12px}
 .np .lang{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:3px;margin-right:6px;background:var(--rubric-soft);color:var(--rubric)}
 .np .lang.en{background:var(--en-soft);color:var(--en)}
 .np .lang.lt{background:var(--lt-soft);color:var(--lt)}
@@ -224,7 +225,8 @@ function tracksFor(bk,c){const out=[];const order=langsEl.value.split(',');
   return out;}
 function startChapter(b){chip&&chip.classList.remove('now','en','lt');chip=b;const bk=BOOK[b.dataset.book];queue=tracksFor(bk,+b.dataset.c);qi=0;
   store.set('bib2-last',b.dataset.book+'|'+b.dataset.c);playTrack();b.scrollIntoView({block:'nearest',behavior:'smooth'});}
-function showNow(t,extra){np.innerHTML='<span class="lang '+t.lang+'">'+t.lang.toUpperCase()+'</span><b></b>'+(extra?' · '+extra:'');np.querySelector('b').textContent=t.label;
+function showNow(t,extra){const nx=queue[qi+1];const after=nx?nx.lang.toUpperCase()+' '+nx.label:(modeEl.value==='stop'?'stop':'next chapter');
+  np.innerHTML='<span class="lang '+t.lang+'">'+t.lang.toUpperCase()+'</span><b></b>'+(extra?' · '+extra:'')+'<br><small class="up"></small>';np.querySelector('b').textContent=t.label;np.querySelector('.up').textContent='Up next: '+after;
   chip.classList.add('now');chip.classList.toggle('en',t.lang==='en');chip.classList.toggle('lt',t.lang==='lt');
   if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:t.label,artist:t.lang==='en'?'World English Bible':t.lang==='lt'?'Naujojo pasaulio vertimas':'Синодальный перевод'});}
 async function playTrack(){const t=queue[qi];if(!t){chapterDone();return}
