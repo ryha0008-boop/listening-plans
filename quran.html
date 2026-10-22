@@ -70,7 +70,25 @@ section{display:flex;flex-direction:column;gap:10px}
 .mode{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
 .mode select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
 .mode input{accent-color:var(--accent);margin:0}
-body{padding-bottom:120px}
+body{padding-bottom:150px}
+.ctools{gap:6px 10px;justify-content:flex-start!important}
+.rate{display:inline-flex;gap:4px}
+.rate button,.askbtn,.ask button,.qs button{font:inherit;font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.rate button.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.askbtn{color:var(--accent)}
+.ask{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px;max-height:45vh;overflow:auto}
+.askrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ask input,.ask textarea{font:inherit;font-size:14px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+.ask textarea{flex:1 1 240px;min-width:0;resize:vertical}
+.ask .primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.qs li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:6px;font-size:14px}
+.qs .ref{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.qs .qt{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
+.qs .acts{display:inline-flex;gap:4px}
+.qbtn{font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;background:var(--accent);color:var(--bg);text-decoration:none}
+.bname .best{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--accent);border:1px solid var(--accent-soft);border-radius:3px;padding:0 4px}
+.bname.hasq .no{text-decoration:underline dotted}
 .lk{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:55%;flex:none}
 @media (max-width:560px){.pl{flex-wrap:wrap}.lk{max-width:100%;justify-content:flex-start;padding-left:28px}}
 a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -92,7 +110,13 @@ a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(-
     <div class="bar"><i id="barAll"></i></div>
   </div>
   <div id="plan"></div>
-  <div class="bar-player"><div class="in"><div class="row"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><label class="mode">Then <select id="mode"><option value="tr">Russian + English translations</option><option value="ru">Russian translation only</option><option value="en">English translation only</option><option value="all">everything incl. commentary</option><option value="stop">nothing</option></select></label><label class="mode"><input type="checkbox" id="autotick" checked> Tick when finished</label></div><audio id="au" controls preload="none"></audio></div></div>
+  <div class="bar-player"><div class="in"><div class="row"><span class="np" id="np">Nothing playing. Tap any <b>▶ Play</b> button.</span><label class="mode">Then <select id="mode"><option value="tr">Russian + English translations</option><option value="ru">Russian translation only</option><option value="en">English translation only</option><option value="all">everything incl. commentary</option><option value="stop">nothing</option></select></label><label class="mode"><input type="checkbox" id="autotick" checked> Tick when finished</label></div><div class="row ctools" id="ctools" hidden><span class="mode">Understood best:</span><span class="rate" id="rate"><button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button></span><button type="button" class="askbtn" id="askOpen">? Ask about this surah</button></div>
+<form class="ask" id="ask" hidden><div class="askrow"><label class="mode" for="askVerse">Ayah</label><input id="askVerse" inputmode="numeric" placeholder="e.g. 5" size="4"><textarea id="askText" rows="2" placeholder="Your question, in any language"></textarea></div>
+<div class="askrow"><button type="submit" class="primary">Save and ask Claude</button><button type="button" id="askSave">Save only</button><button type="button" id="askClose">Close</button></div><ul class="qs" id="chapterQs"></ul></form>
+<audio id="au" controls preload="none"></audio></div></div>
+  <section class="mynotes"><div class="shead"><h2><span>Notes</span>My questions</h2><span class="scount" id="rateStats"></span></div>
+    <p class="note" id="qsEmpty">While a surah plays, tap <b>? Ask about this surah</b> in the player to save a question. Your questions collect here, each with a button to ask Claude.</p>
+    <ul class="qs" id="allQs"></ul></section>
   <div class="foot">
     <span>Your ticks are saved in this browser only. A surah counts as complete when its translation and commentary are both ticked.</span>
     <span id="resetBox"><button id="reset" type="button">Clear all ticks</button></span>
@@ -191,6 +215,39 @@ if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttra
 au.addEventListener('error',()=>{if(!au.getAttribute('src'))return;
   if(ayQ&&cur){np.textContent='The English recording could not be loaded. Moving on.';const nx=nextFrom(cur);ayQ=null;if(nx)setTimeout(()=>playBtn(nx),1500);return}
   np.textContent='This recording could not be loaded. The site may be down; try again later.'});
+
+/* ---------- Understood best + questions ---------- */
+const st2={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let best=st2.get('quran-best',{});let qs=st2.get('quran-qs',[]);let curS=null;
+const rateEl=document.getElementById('rate'),ctools=document.getElementById('ctools'),askF=document.getElementById('ask');
+const surahOf=b=>parseInt(b.dataset.k,10);
+function paintBooks(){document.querySelectorAll('.book').forEach(row=>{const no=row.querySelector('.bname .no');if(!no)return;const n=+no.textContent;const bn=row.querySelector('.bname');
+  let tag=bn.querySelector('.best');if(best[n]){if(!tag){tag=document.createElement('span');tag.className='best';bn.insertBefore(tag,bn.querySelector('small'))}tag.textContent=best[n].toUpperCase()}else if(tag)tag.remove();
+  bn.classList.toggle('hasq',qs.some(q=>q.s===n))})}
+function paintRate(){rateEl.querySelectorAll('button').forEach(x=>x.classList.toggle('on',curS!=null&&x.dataset.l===best[curS]))}
+function rateStats(){const c={ru:0,en:0};Object.values(best).forEach(v=>c[v]=(c[v]||0)+1);document.getElementById('rateStats').textContent=(c.ru+c.en)?'Understood best: RU '+c.ru+' · EN '+c.en:''}
+rateEl.addEventListener('click',e=>{const x=e.target.closest('button');if(!x||curS==null)return;if(best[curS]===x.dataset.l)delete best[curS];else best[curS]=x.dataset.l;
+  st2.set('quran-best',best);paintRate();paintBooks();rateStats();});
+const qesc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function qPrompt(q){const [ru,en]=S[q.s-1];return 'I am listening to the Quran in Russian (Elmir Kuliev\'s translation of the meanings) and English (Saheeh International). '+
+  'This is about Surah '+q.s+' '+en+' ('+ru+')'+(q.v?', ayah '+q.v:'')+'. Please explain clearly and simply, note if the Russian and English translations differ here, '+
+  'and mention how classical tafsir (for example as-Sa\'di or Ibn Kathir) explains it. My question: '+q.q;}
+const qUrl=q=>'https://claude.ai/new?q='+encodeURIComponent(qPrompt(q));
+function qItem(q,i){return `<li><span class="ref">${q.s}${q.v?':'+qesc(q.v):''} ${qesc(S[q.s-1][1])}</span><span class="qt"></span><span class="acts"><a class="qbtn" href="${qUrl(q)}" target="_blank" rel="noopener">Ask Claude</a><button type="button" data-copy="${i}">Copy</button><button type="button" data-del="${i}">Delete</button></span></li>`}
+function renderQs(){const all=document.getElementById('allQs');all.innerHTML=qs.map(qItem).join('');all.querySelectorAll('.qt').forEach((el,i)=>el.textContent=qs[i].q);
+  document.getElementById('qsEmpty').hidden=qs.length>0;
+  const cl=document.getElementById('chapterQs');const idx=qs.map((q,i)=>[q,i]).filter(([q])=>q.s===curS);cl.innerHTML=idx.map(([q,i])=>qItem(q,i)).join('');
+  cl.querySelectorAll('.qt').forEach((el,j)=>el.textContent=idx[j][0].q);paintBooks();}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c){const t=qPrompt(qs[+c.dataset.copy]);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>{const o=c.textContent;c.textContent='Copied';setTimeout(()=>c.textContent=o,1500)},()=>{});return}
+  const d=e.target.closest('[data-del]');if(d){qs.splice(+d.dataset.del,1);st2.set('quran-qs',qs);renderQs()}});
+function saveQ(){const t=document.getElementById('askText').value.trim();if(!t||curS==null)return null;const q={s:curS,v:document.getElementById('askVerse').value.trim(),q:t,t:Date.now()};
+  qs.push(q);st2.set('quran-qs',qs);document.getElementById('askText').value='';document.getElementById('askVerse').value='';renderQs();return q;}
+askF.addEventListener('submit',e=>{e.preventDefault();const q=saveQ();if(q)window.open(qUrl(q),'_blank','noopener')});
+document.getElementById('askSave').onclick=()=>saveQ();
+document.getElementById('askOpen').onclick=()=>{askF.hidden=!askF.hidden;if(!askF.hidden){renderQs();document.getElementById('askText').focus()}};
+document.getElementById('askClose').onclick=()=>{askF.hidden=true};
+const _pb=playBtn;playBtn=function(b){_pb(b);curS=surahOf(b);ctools.hidden=false;paintRate();if(!askF.hidden)renderQs();};
+renderQs();rateStats();
 update();
 </script>
 
