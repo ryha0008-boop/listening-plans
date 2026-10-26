@@ -2,335 +2,625 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Библия · Bible</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=PT+Sans:wght@400;700&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f8f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171211" media="(prefers-color-scheme: dark)">
+<title>Библия · Bible · Biblija</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=PT+Sans:wght@400;700&family=PT+Serif:ital@0;1&display=swap">
 <style>
-/* Layout: one reading column, chapter chips per book, a fixed player that alternates Russian and English */
+/* Layout: library (books → chapter chips) and a reader (verse text) that swap on phones and sit side by side on wide screens; one fixed player at the bottom. */
 :root{
-  --bg:#f8f5f3; --surface:#ffffff; --fg:#231c1a; --muted:#6f6360; --line:#e4dbd7;
-  --rubric:#a8241c; --rubric-soft:#f3dedb; --en:#2f5d8a; --en-soft:#dde8f3; --lt:#7a5a08; --lt-soft:#f3e9cf; --done:#3f6b4a;
-  --display:"Prata","PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
+  --bg:#f8f5f3;--surface:#ffffff;--fg:#231c1a;--muted:#6f6360;--line:#e4dbd7;--soft:#f1ebe8;
+  --ru:#a8241c;--ru-soft:#f3dedb;--en:#2f5d8a;--en-soft:#dde8f3;--lt:#7a5a08;--lt-soft:#f3e9cf;--done:#3f6b4a;
+  --display:"Prata","PT Serif",Georgia,serif;--body:"PT Sans","Segoe UI",Arial,sans-serif;--read:"PT Serif",Georgia,serif;
+  --player-h:118px;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#171211; --surface:#211a19; --fg:#efe7e4; --muted:#a89995; --line:#3a2f2d;
-  --rubric:#e2685d; --rubric-soft:#3d2321; --en:#7fb0e0; --en-soft:#1f2c3a; --lt:#e0bf6a; --lt-soft:#352c16; --done:#7fb38b; color-scheme:dark}}
-html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 150px}
-.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
-h1,h2{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
-h1{font-size:clamp(28px,6vw,40px);line-height:1.15}
-h1 .cap{color:var(--rubric)}
-.lede{color:var(--muted);max-width:62ch;margin:6px 0 0}
-.lede b{color:var(--fg)}
-.overall{display:flex;flex-direction:column;gap:8px;position:sticky;top:0;z-index:5;background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line)}
-.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
-.stats b{color:var(--fg)}
-.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:var(--rubric);transition:width .3s}
-section{display:flex;flex-direction:column;gap:8px}
-.shead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.shead h2{font-size:22px}
-.shead h2 span{color:var(--rubric);font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--body);font-weight:700;margin-right:8px}
-.scount{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.note{color:var(--muted);font-size:14px;margin:0;max-width:62ch}
-.books{border-top:1px solid var(--line)}
-.book{display:grid;grid-template-columns:170px 1fr;gap:6px 16px;padding:12px 0;border-bottom:1px solid var(--line)}
-.bname{font-weight:700;min-width:0}
-.bname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
-.bname .bdone{display:inline-block;margin-top:4px;font-size:12px;font-weight:700;color:var(--done)}
-.chips{display:flex;flex-wrap:wrap;gap:4px;min-width:0;align-content:flex-start}
-.ch{font:inherit;font-size:12px;min-width:32px;padding:4px 6px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;font-variant-numeric:tabular-nums}
-.ch:hover{border-color:var(--rubric)}
-.ch.done{color:var(--muted);background:transparent;border-style:dashed}
-.ch.now{background:var(--rubric);border-color:var(--rubric);color:#fff}
-.ch.now.en{background:var(--en);border-color:var(--en)}
-.ch.now.lt{background:var(--lt);border-color:var(--lt)}
-.ch:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--rubric);outline-offset:2px}
-.missing{font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding:4px 12px;margin:0;max-width:70ch}
-.player{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(10px + env(safe-area-inset-bottom,0px))}
-.player .in{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
-.player .row{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
-.np{flex:1 1 260px;min-width:0;font-size:13px;color:var(--muted)}
-.np b{color:var(--fg)}
-.np .up{color:var(--muted);font-size:12px}
-.np .lang{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:3px;margin-right:6px;background:var(--rubric-soft);color:var(--rubric)}
-.np .lang.en{background:var(--en-soft);color:var(--en)}
-.np .lang.lt{background:var(--lt-soft);color:var(--lt)}
-.np button{font:inherit;font-size:13px;font-weight:700;color:var(--rubric);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
-.opt{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
-.opt select{font:inherit;font-size:13px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
-.player audio{width:100%}
-.foot{color:var(--muted);font-size:13px}
-.ctools{gap:6px 10px}
-.rate{display:inline-flex;gap:4px}
-.rate button,.askbtn,.ask button,.qs button{font:inherit;font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
-.rate button[data-l="ru"].on{background:var(--rubric);border-color:var(--rubric);color:#fff}
-.rate button[data-l="en"].on{background:var(--en);border-color:var(--en);color:#fff}
-.rate button[data-l="lt"].on{background:var(--lt);border-color:var(--lt);color:#fff}
-.askbtn{color:var(--rubric)}
-.qbtn{font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;background:var(--rubric);color:#fff;text-decoration:none}
-.ask{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px;max-height:45vh;overflow:auto}
-.askrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.ask input,.ask textarea{font:inherit;font-size:14px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
-.ask textarea{flex:1 1 240px;min-width:0;resize:vertical}
-.ask .primary{background:var(--rubric);border-color:var(--rubric);color:#fff}
-.qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.qs li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:6px;font-size:14px}
-.qs .ref{font-weight:700;color:var(--rubric);font-variant-numeric:tabular-nums}
-.qs .qt{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
-.qs .acts{display:inline-flex;gap:4px}
-.ch{position:relative}
-.ch[data-best]::after{content:"";position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%}
-.ch[data-best="ru"]::after{background:var(--rubric)}.ch[data-best="en"]::after{background:var(--en)}.ch[data-best="lt"]::after{background:var(--lt)}
-.ch.hasq{font-weight:700;text-decoration:underline dotted}
-@media (max-width:560px){.book{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+  --bg:#171211;--surface:#211a19;--fg:#efe7e4;--muted:#a89995;--line:#3a2f2d;--soft:#2a2220;
+  --ru:#e2685d;--ru-soft:#3d2321;--en:#7fb0e0;--en-soft:#1f2c3a;--lt:#e0bf6a;--lt-soft:#352c16;--done:#7fb38b;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);-webkit-text-size-adjust:100%;touch-action:manipulation;
+  padding-bottom:calc(var(--player-h) + env(safe-area-inset-bottom,0px))}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;min-height:40px}
+button.icon{min-width:40px;padding:6px 10px;font-size:18px;line-height:1}
+button.primary{background:var(--ru);border-color:var(--ru);color:#fff;font-weight:700}
+button:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--en);outline-offset:2px}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+small,.muted{color:var(--muted)}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+/* top bar */
+.top{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .in{display:flex;align-items:center;gap:8px;padding-block:8px;max-width:1100px;margin:0 auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+.top h1{font-size:20px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top h1 b{color:var(--ru);font-weight:400}
+.prog{height:4px;background:var(--line)}
+.prog i{display:block;height:100%;width:0;background:var(--ru);transition:width .3s}
+/* two-pane on wide screens */
+.panes{display:grid;grid-template-columns:1fr;gap:0}
+@media (min-width:900px){.panes{grid-template-columns:minmax(320px,420px) 1fr;gap:28px;align-items:start}
+  #lib{position:sticky;top:60px;max-height:calc(100vh - 60px - var(--player-h));overflow:auto;padding-right:8px}
+  .mobile-only{display:none!important}}
+@media (max-width:899px){.panes>section[data-hide]{display:none}}
+/* continue card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:14px 0;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.card .t{flex:1 1 180px;min-width:0}
+.card .t b{display:block;font-size:16px}
+/* sections & books */
+details.sec{border-top:1px solid var(--line)}
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:12px 0;min-height:44px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h2{font-size:19px;flex:1}
+details.sec>summary .cnt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+details.sec>summary::before{content:"▸";color:var(--muted);font-size:13px;transition:transform .15s}
+details.sec[open]>summary::before{transform:rotate(90deg)}
+.book{border-top:1px dashed var(--line);padding:6px 0}
+.book .row{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;padding:4px 0}
+.book .nm{flex:1;min-width:0}
+.book .nm b{display:block;font-size:15px}
+.book .nm small{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book .st{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.book .st.done{color:var(--done);font-weight:700}
+.avail{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.avail i{display:inline-block;width:8px;height:8px;border-radius:50%;opacity:.35}
+.avail i.on{opacity:1}
+.avail i.ru{background:var(--ru)}.avail i.en{background:var(--en)}.avail i.lt{background:var(--lt)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 10px}
+.ch{min-width:42px;min-height:40px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-variant-numeric:tabular-nums;font-size:14px;position:relative}
+.ch.done{border-style:dashed;color:var(--muted);background:transparent}
+.ch.now{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.ch[data-best]::after{content:"";position:absolute;right:3px;top:3px;width:6px;height:6px;border-radius:50%}
+.ch[data-best=ru]::after{background:var(--ru)}.ch[data-best=en]::after{background:var(--en)}.ch[data-best=lt]::after{background:var(--lt)}
+.ch.hasq{text-decoration:underline dotted}
+/* reader */
+#reader{padding-top:10px}
+.rhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.rhead h2{font-size:22px;flex:1 1 200px;min-width:0}
+.rhead .sub{width:100%;font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+.tabs button{padding:8px 14px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.04em}
+.tabs button.ru.on{background:var(--ru);border-color:var(--ru);color:#fff}
+.tabs button.en.on{background:var(--en);border-color:var(--en);color:#fff}
+.tabs button.lt.on{background:var(--lt);border-color:var(--lt);color:#fff}
+.tabs button[disabled]{opacity:.4;cursor:default}
+.ubest{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:10px}
+.ubest button{min-height:32px;padding:4px 10px;font-size:12px;font-weight:700;border-radius:6px}
+.ubest button.ru.on{background:var(--ru);border-color:var(--ru);color:#fff}
+.ubest button.en.on{background:var(--en);border-color:var(--en);color:#fff}
+.ubest button.lt.on{background:var(--lt);border-color:var(--lt);color:#fff}
+.text{font-family:var(--read);font-size:18px;line-height:1.62;max-width:68ch}
+.text h3{font-family:var(--display);font-size:17px;margin:14px 0 6px;color:var(--muted)}
+.v{padding:3px 6px;border-radius:6px;margin-left:-6px;cursor:pointer}
+.v:active,.v.sel{background:var(--soft)}
+.v sup{font-family:var(--body);font-size:11px;color:var(--muted);margin-right:4px;font-weight:700}
+.v.missing{color:var(--muted);font-style:italic;font-size:15px}
+.v[data-best=ru]{box-shadow:inset 3px 0 0 var(--ru)}.v[data-best=en]{box-shadow:inset 3px 0 0 var(--en)}.v[data-best=lt]{box-shadow:inset 3px 0 0 var(--lt)}
+.v.hasq sup{color:var(--ru)}
+.vact{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 10px 0;font-family:var(--body);font-size:13px}
+.vact button{min-height:34px;padding:4px 10px;font-size:12px;font-weight:700;border-radius:6px}
+.vact button.ru.on{background:var(--ru);border-color:var(--ru);color:#fff}
+.vact button.en.on{background:var(--en);border-color:var(--en);color:#fff}
+.vact button.lt.on{background:var(--lt);border-color:var(--lt);color:#fff}
+.rnav{display:flex;gap:8px;margin:18px 0 8px}
+.rnav button{flex:1}
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding:4px 10px;margin:10px 0}
+/* player */
+.player{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.14);
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.player .in{max-width:1100px;margin:0 auto}
+.np{display:flex;align-items:center;gap:8px;min-height:40px}
+.np .lang{flex:none;font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:5px;background:var(--soft);color:var(--muted)}
+.np .lang.ru{background:var(--ru-soft);color:var(--ru)}.np .lang.en{background:var(--en-soft);color:var(--en)}.np .lang.lt{background:var(--lt-soft);color:var(--lt)}
+.np .tt{flex:1;min-width:0;line-height:1.25}
+.np .tt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.np .tt small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.ctl{display:flex;align-items:center;gap:6px}
+.ctl button{min-width:44px;min-height:40px;font-size:18px;padding:4px}
+.ctl button.big{min-width:52px;font-size:22px;background:var(--ru);border-color:var(--ru);color:#fff}
+.seek{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.seek input{flex:1;min-width:0;accent-color:var(--ru);height:28px;margin:0}
+.more{display:none;flex-wrap:wrap;gap:8px 14px;padding:8px 0 2px;border-top:1px solid var(--line);margin-top:6px;font-size:13px;color:var(--muted)}
+.player.open .more{display:flex}
+.more label{display:inline-flex;align-items:center;gap:6px}
+.more select{min-height:36px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px}
+/* sheet (modal) */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--surface);border-radius:16px 16px 0 0;max-height:85vh;overflow:auto;
+  padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+@media (min-width:700px){.sheet{left:50%;right:auto;transform:translateX(-50%);width:640px;bottom:5vh;border-radius:16px}}
+.sheet h2{font-size:20px;margin-bottom:8px}
+.sheet .x{position:absolute;right:10px;top:10px}
+.sheet textarea,.sheet input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);resize:vertical}
+.qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.qs li{border-bottom:1px solid var(--line);padding-bottom:8px}
+.qs .ref{font-weight:700;color:var(--ru)}
+.qs .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.qs .acts a,.qs .acts button{font-size:12px;font-weight:700;padding:6px 10px;min-height:34px;border-radius:6px;text-decoration:none;display:inline-flex;align-items:center}
+.qs .acts a{background:var(--ru);color:#fff}
+.stat{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:8px 0}
+.stat b{color:var(--fg)}
+.foot{font-size:12.5px;color:var(--muted);margin:24px 0 8px;max-width:72ch}
+.toast{position:fixed;left:50%;bottom:calc(var(--player-h) + 12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;z-index:60;font-size:14px;max-width:90vw}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1><span class="cap">Б</span>иблия · Bible</h1>
-    <p class="lede">The Bible read aloud, chapter by chapter, in <b>Russian</b>, <b>English</b> and <b>Lithuanian</b>. Tap any chapter number: you hear it in the Synodal translation, then the same chapter in English, then in Lithuanian, then the next chapter, and so on. Choose the order and languages in the player at the bottom.</p>
-  </header>
-  <div class="overall" aria-live="polite">
-    <div class="stats"><span><b id="cDone">0</b> of <b id="cAll">0</b> chapters heard</span><span><b id="bDone">0</b> of <b id="bAll">0</b> books</span><span id="pct">0%</span></div>
-    <div class="bar"><i id="barAll"></i></div>
+<header class="top">
+  <div class="in">
+    <button class="icon mobile-only" id="backBtn" hidden aria-label="Back to books">‹</button>
+    <h1><b>Б</b>иблия · Bible · Biblija</h1>
+    <button class="icon" id="notesBtn" title="My questions" aria-label="My questions">✎</button>
+    <button class="icon" id="setBtn" title="Settings" aria-label="Settings">⚙</button>
   </div>
-  <div id="plan"></div>
-  <section class="mynotes"><div class="shead"><h2><span>Notes</span>My questions</h2><span class="scount" id="rateStats"></span></div>
-    <p class="note" id="qsEmpty">While a chapter plays, tap <b>? Ask about this chapter</b> in the player to save a question. Your questions collect here, each with a button to ask Claude.</p>
-    <ul class="qs" id="allQs"></ul></section>
-  <p class="missing">Not included: Tobit, Judith, Wisdom of Solomon, Sirach, Baruch, the Letter of Jeremiah, 1–3 Maccabees and 2–3 Ezra, and Daniel 13–14. They are part of the Orthodox Bible, but no chapter-by-chapter recording of them exists on either site.</p>
-  <p class="foot">Russian: Synodal translation, read by Alexander Kabilov (azbyka.ru: New Testament, Genesis, Song of Songs) and Alexander Bondarenko (allbible.info: rest of the Old Testament). English: World English Bible (public domain), read by Winfred Henson (ebible.org). Lithuanian: the New World Translation (Naujojo pasaulio vertimas), published by Jehovah's Witnesses (jw.org); it is not a translation used by the Orthodox, Catholic or Lutheran churches. Psalms follow the Russian numbering; the English and Lithuanian readings switch to the matching psalm in their numbering. Your progress is saved in this browser.</p>
+  <div class="prog"><i id="prog"></i></div>
+</header>
+
+<main class="wrap panes">
+  <section id="lib">
+    <div class="card" id="cont"></div>
+    <div id="sections"></div>
+    <p class="foot" id="credits"></p>
+  </section>
+  <section id="reader" data-hide>
+    <div class="rhead"><h2 id="rTitle">—</h2><div class="sub" id="rSub"></div></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="ubest" id="ubest"></div>
+    <div class="text" id="text"></div>
+    <div class="rnav"><button id="prevCh">‹ Previous</button><button id="nextCh">Next ›</button></div>
+  </section>
+</main>
+
+<div class="player" id="player">
+  <div class="in">
+    <div class="np">
+      <span class="lang" id="npLang">—</span>
+      <div class="tt"><b id="npTitle">Choose a chapter to begin</b><small id="npSub">Tap any chapter number in the list.</small></div>
+      <div class="ctl"><button id="prevT" aria-label="Previous">⏮</button><button class="big" id="playT" aria-label="Play">▶</button><button id="nextT" aria-label="Next">⏭</button><button id="moreT" aria-label="More" class="icon">⌃</button></div>
+    </div>
+    <div class="seek"><span id="tCur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position"><span id="tDur">0:00</span></div>
+    <div class="more">
+      <label>Languages <select id="langs">
+        <option value="ru,en,lt">RU → EN → LT</option><option value="ru,lt,en">RU → LT → EN</option><option value="en,ru,lt">EN → RU → LT</option><option value="lt,ru,en">LT → RU → EN</option>
+        <option value="ru,en">RU → EN</option><option value="en,ru">EN → RU</option><option value="ru,lt">RU → LT</option><option value="lt,ru">LT → RU</option><option value="en,lt">EN → LT</option>
+        <option value="ru">Russian only</option><option value="en">English only</option><option value="lt">Lithuanian only</option></select></label>
+      <label>Then <select id="mode"><option value="next">next chapter</option><option value="book">stop at end of book</option><option value="stop">stop</option></select></label>
+      <label>Speed <select id="rate"><option>0.8</option><option>0.9</option><option selected>1</option><option>1.1</option><option>1.25</option><option>1.5</option></select></label>
+      <label><input type="checkbox" id="follow" checked> Show text of the language playing</label>
+    </div>
+  </div>
+  <audio id="au" preload="auto" playsinline></audio>
 </div>
 
-<div class="player"><div class="in">
-  <div class="row">
-    <span class="np" id="np">Tap a chapter number to start.</span>
-  </div>
-  <div class="row">
-    <label class="opt">Languages <select id="langs"><option value="ru,en,lt">Russian, English, Lithuanian</option><option value="lt,ru,en">Lithuanian, Russian, English</option><option value="ru,en">Russian, English</option><option value="ru,lt">Russian, Lithuanian</option><option value="en,lt">English, Lithuanian</option><option value="ru">Russian only</option><option value="en">English only</option><option value="lt">Lithuanian only</option></select></label>
-    <label class="opt">Then <select id="mode"><option value="next">keep going</option><option value="book">stop at end of book</option><option value="stop">stop after this chapter</option></select></label>
-  </div>
-  <div class="row ctools" id="ctools" hidden>
-    <span class="opt">Understood best:</span>
-    <span class="rate" id="rate"><button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button><button type="button" data-l="lt">LT</button></span>
-    <button type="button" class="askbtn" id="askOpen">? Ask about this chapter</button>
-  </div>
-  <form class="ask" id="ask" hidden>
-    <div class="askrow"><label class="opt" for="askVerse">Verse</label><input id="askVerse" inputmode="numeric" placeholder="e.g. 5" size="4">
-      <textarea id="askText" rows="2" placeholder="Your question, in any language"></textarea></div>
-    <div class="askrow"><button type="submit" class="primary">Save and ask Claude</button><button type="button" id="askSave">Save only</button><button type="button" id="askClose">Close</button></div>
-    <ul class="qs" id="chapterQs"></ul>
-  </form>
-  <audio id="au" controls preload="none"></audio>
-</div></div>
+<div id="sheetWrap" hidden><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
 
 <script>
-/* ---------- Russian sources ---------- */
-const KAB='https://media.azbyka.ru/audio/Svjashhennoe_pisanie/biblija_kabilov/';
-const AB='https://audio.allbible.info/sinodal/';
-const rng=n=>Array.from({length:n},(_,i)=>i+1);
-const kabEv=(c,n)=>rng(n).map(i=>KAB+'novyj-zavet/evangelie/'+c+'_'+i+'.mp3');
-const kabAp=(c,n)=>rng(n).map(i=>KAB+'novyj-zavet/apostol/'+c+'.'+i+'.mp3');
-const ab=(nn,c,n)=>rng(n).map(i=>AB+nn+'_'+c+'/'+String(i).padStart(String(n).length,'0')+'.mp3');
-
-/* ---------- English (World English Bible, ebible.org) ---------- */
-const ENG=[null,
- ['01_Genesis',50],['02_Exodus',40],['03_Leviticus',27],['04_Numbers',36],['05_Deuteronomy',34],['06_Joshua',24],['07_Judges',21],['08_Ruth',4],
- ['09_First_Samuel',31],['10_Second_Samuel',24],['11_First_Kings',22],['12_Second_Kings',25],['13_First_Chronicles',29],['14_Second_Chronicles',36],
- ['15_Ezra',10],['16_Nehemiah',13],['17_Esther',10],['18_Job',42],['19_Psalms',150],['20_Proverbs',31],['21_Ecclesiastes',12],['22_Song_of_Solomon',8],
- ['23_Isaiah',66],['24_Jeremiah',52],['25_Lamentations',5],['26_Ezekiel',48],['27_Daniel',12],['28_Hosea',14],['29_Joel',3],['30_Amos',9],['31_Obadiah',1],
- ['32_Jonah',4],['33_Micah',7],['34_Nahum',3],['35_Habakkuk',3],['36_Zephaniah',3],['37_Haggai',2],['38_Zechariah',14],['39_Malachi',4],
- ['40_Matthew',28],['41_Mark',16],['42_Luke',24],['43_John',21],['44_Acts',28],['45_Romans',16],['46_First_Corinthians',16],['47_Second_Corinthians',13],
- ['48_Galatians',6],['49_Ephesians',6],['50_Philippians',4],['51_Colossians',4],['52_First_Thessalonians',5],['53_Second_Thessalonians',3],
- ['54_First_Timothy',6],['55_Second_Timothy',4],['56_Titus',3],['57_Philemon',1],['58_Hebrews',13],['59_James',5],['60_First_Peter',5],['61_Second_Peter',3],
- ['62_First_John',5],['63_Second_John',1],['64_Third_John',1],['65_Jude',1],['66_Revelations',22]];
-const START=[0];for(let b=1;b<=66;b++)START[b]=(START[b-1]||1)+(b>1?ENG[b-1][1]:0); START[1]=1;
+'use strict';
+/* =====================================================================
+   DATA
+   ===================================================================== */
+const AZ='https://media.azbyka.ru/audio/Svjashhennoe_pisanie/';
+const EB='https://ebible.org/eng-web/audio/';
+const pad=(n,w)=>String(n).padStart(w,'0');
 const ONES=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
 const TENS=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
-function words(n){if(n>=100)return 'One Hundred'+(n>100?' '+words(n-100):'');if(n<20)return ONES[n];return TENS[Math.floor(n/10)]+(n%10?' '+ONES[n%10]:'')}
-const p4=n=>String(n).padStart(4,'0'),p2=n=>String(n).padStart(2,'0'),p3=n=>String(n).padStart(3,'0');
-/* Candidate file names for English book b, chapter c. The site names files differently per book, so several are tried in order. */
-function engCands(b,c){
-  const [folder]=ENG[b];const base='https://ebible.org/eng-web/audio/'+folder+'/';
-  const name=folder.slice(3).replace(/_/g,' ');const names=b===66?['Revelation','Revelations']:[name];
-  const std=START[b]+c-1;const idx=b>=24?[std-1,std]:b===23?[std,std-1]:[std,std-1];
-  const W=words(c),E=s=>s.replace(/ /g,'%20');const out=[];
-  if(b===19)return [base+p4(478+c)+'%20Psalms-'+E(W)+'.mp3',base+'01%20'+p4(478+c)+'%20Psalms-'+E(W)+'.mp3'];
-  if(b===20)out.push(base+p4(std)+'%20Proverbs-Chapter%20'+p3(c)+'.mp3');
-  if(b<=9){const cc=b===9?c+36:c;out.push(base+p2(b)+'_'+p2(cc)+'_'+name.replace(/ /g,'_')+'_Chapter_'+W.replace(/ /g,'_')+'.mp3')}
-  for(const i of idx)for(const nm of names){
-    out.push(base+'01%20'+p4(i)+'%20'+E(nm)+'-Chapter%20'+E(W)+'.mp3');
-    out.push(base+p4(i)+'%20'+E(nm)+'-Chapter%20'+E(W)+'.mp3');}
-  if(b>9)out.push(base+p2(b)+'_'+p2(c)+'_'+name.replace(/ /g,'_')+'_Chapter_'+W.replace(/ /g,'_')+'.mp3');
-  return [...new Set(out)];
+const words=n=>n>=100?'One Hundred'+(n>100?' '+words(n-100):''):n<20?ONES[n]:TENS[Math.floor(n/10)]+(n%10?' '+ONES[n%10]:'');
+
+/* English audio (World English Bible, read by Winfred Henson, ebible.org). File names verified against the site's listings. */
+const EN_FOLDERS=['01_Genesis','02_Exodus','03_Leviticus','04_Numbers','05_Deuteronomy','06_Joshua','07_Judges','08_Ruth','09_First_Samuel','10_Second_Samuel','11_First_Kings','12_Second_Kings','13_First_Chronicles','14_Second_Chronicles','15_Ezra','16_Nehemiah','17_Esther','18_Job','19_Psalms','20_Proverbs','21_Ecclesiastes','22_Song_of_Solomon','23_Isaiah','24_Jeremiah','25_Lamentations','26_Ezekiel','27_Daniel','28_Hosea','29_Joel','30_Amos','31_Obadiah','32_Jonah','33_Micah','34_Nahum','35_Habakkuk','36_Zephaniah','37_Haggai','38_Zechariah','39_Malachi','40_Matthew','41_Mark','42_Luke','43_John','44_Acts','45_Romans','46_First_Corinthians','47_Second_Corinthians','48_Galatians','49_Ephesians','50_Philippians','51_Colossians','52_First_Thessalonians','53_Second_Thessalonians','54_First_Timothy','55_Second_Timothy','56_Titus','57_Philemon','58_Hebrews','59_James','60_First_Peter','61_Second_Peter','62_First_John','63_Second_John','64_Third_John','65_Jude','66_Revelations'];
+const EN_SEQ0=[1,1,1,1,1,1,1,1,37,268,292,314,339,368,404,414,427,437,479,629,660,672,680,745,797,802,850,862,876,879,888,889,893,900,903,906,909,911,925,929,957,973,997,1018,1046,1062,1078,1091,1097,1103,1107,1111,1116,1119,1125,1129,1132,1133,1146,1151,1156,1159,1164,1165,1166,1167];
+const EN_NO01=new Set([14,15,19,20,21,22,41,43,60]);
+function enAudio(b,c){ // b = 1..66 (Protestant order), c = chapter
+  const f=EN_FOLDERS[b-1];if(!f)return null;const base=EB+f+'/';
+  if(b<=9)return base+encodeURIComponent(`${pad(b,2)}_${pad(EN_SEQ0[b-1]+c-1,2)}_${f.slice(3)}_Chapter_${words(c).replace(/ /g,'_')}.mp3`);
+  let seq=EN_SEQ0[b-1]+c-1; if(b===23&&c>=17)seq-=1;
+  const tok=f.slice(3).replace(/_/g,' ');let name;
+  if(b===19)name=`${pad(seq,4)} Psalms-${words(c)}.mp3`;
+  else if(b===20)name=`${pad(seq,4)} Proverbs-Chapter ${pad(c,3)}.mp3`;
+  else if(b===44&&c===13)name=`01 1030 Acts-Chapter Thirteen 1.mp3`;
+  else if(b===53&&c===3)name=`01  1118 Second Thessalonians-Chapter Three.mp3`;
+  else name=`${EN_NO01.has(b)?'':'01 '}${pad(seq,4)} ${tok}-Chapter ${words(c)}.mp3`;
+  return base+encodeURIComponent(name);
 }
-/* Synodal psalm number → English psalm number(s) */
-function psEng(s){if(s<=8)return[s];if(s===9)return[9,10];if(s<=112)return[s+1];if(s===113)return[114,115];if(s===114)return[116];if(s===115)return[];
-  if(s<=145)return[s+1];if(s===146)return[147];if(s===147)return[];return[s];}
+/* Russian audio (Synodal translation read by Ilya Prudovsky, azbyka.ru) */
+const ruPat=(dir,pre,ext='.mp3',w=2)=>c=>AZ+'biblija_prudovskij/'+dir+'/'+pre+pad(c,w)+ext;
+const NT_SEQ={MAT:['Mth',1,2],MRK:['Mk',29,0],LUK:['Lk',45,0],JHN:['In',69,0],ACT:['Acts',90,2],JAS:['James',118,2],'1PE':['1_Peter',123,2],'2PE':['2_Peter',128,2],'1JN':['1_John',131,2],'2JN':['2_John',136,2],'3JN':['3_John',137,2],JUD:['Jude',138,2],ROM:['Romans',139,2],'1CO':['1_Corinthians',155,2],'2CO':['2_Corinthians',171,2],GAL:['Galatians',184,2],EPH:['Ephesians',190,2],PHP:['Philippians',196,2],COL:['Colossians',200,2],'1TH':['1_Thessalonians',204,2],'2TH':['2_Thessalonians',209,2],'1TI':['1_Timothy',212,2],'2TI':['2_Timothy',218,2],TIT:['Titus',222,2],PHM:['Philemon',225,2],HEB:['Hebrews',226,2],REV:['Revelation',239,2]};
+const ruNT=code=>c=>{const [tok,s0,w]=NT_SEQ[code];const s=s0+c-1;return AZ+'biblija_prudovskij/novyj-zavet/'+(s<100?pad(s,3):'0'+s)+'_'+tok+'_'+(w?pad(c,w):c)+'.mp3'};
 
-
-/* ---------- Lithuanian (New World Translation, jw.org media API) ---------- */
-const LTC={};
-async function ltUrl(b,c){
-  if(!LTC[b]){const cached=store.get('bib3-lt-'+b,null);
-    if(cached)LTC[b]=cached;else{
-      const r=await fetch('https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?output=json&pub=nwt&fileformat=MP3&alllangs=0&langwritten=L&txtCMSLang=L&booknum='+b);
-      if(!r.ok)throw new Error('http '+r.status);const j=await r.json();const list=(((j.files||{}).L||{}).MP3)||[];const m={};
-      list.forEach(e=>{const t=e.track,u=e.file&&e.file.url;if(t&&u&&!m[t]&&(e.bibleBookNumber==null||e.bibleBookNumber===b))m[t]=u});
-      LTC[b]=m;store.set('bib3-lt-'+b,m);}}
-  return LTC[b][c]||null;}
-
-/* ---------- Plan ---------- */
-const B=(key,en,ru,ruUrls,eb)=>({key,en,ru,ruUrls,eb});
-const plan=[
- {num:'Stage 1',name:'Gospels and Acts',note:'Start here.',books:[
-  B('Mark','Mark','Евангелие от Марка',kabEv('Mk',16),41),B('Matthew','Matthew','Евангелие от Матфея',kabEv('Mt',28),40),
-  B('Luke','Luke','Евангелие от Луки',kabEv('Lk',24),42),B('John','John','Евангелие от Иоанна',kabEv('In',21),43),B('Acts','Acts','Деяния апостолов',kabAp('deyan',28),44)]},
- {num:'Stage 2',name:'Epistles and Revelation',books:[
-  B('Romans','Romans','К Римлянам',kabAp('rim',16),45),B('1 Corinthians','1 Corinthians','1 Коринфянам',kabAp('1kor',16),46),B('2 Corinthians','2 Corinthians','2 Коринфянам',kabAp('2kor',13),47),
-  B('Galatians','Galatians','К Галатам',kabAp('gal',6),48),B('Ephesians','Ephesians','К Ефесянам',kabAp('ef',6),49),B('Philippians','Philippians','К Филиппийцам',kabAp('flp',4),50),
-  B('Colossians','Colossians','К Колоссянам',kabAp('kol',4),51),B('1 Thessalonians','1 Thessalonians','1 Фессалоникийцам',kabAp('1sol',5),52),B('2 Thessalonians','2 Thessalonians','2 Фессалоникийцам',kabAp('2sol',3),53),
-  B('1 Timothy','1 Timothy','1 Тимофею',kabAp('1tim',6),54),B('2 Timothy','2 Timothy','2 Тимофею',kabAp('2tim',4),55),B('Titus','Titus','К Титу',kabAp('tit',3),56),
-  B('Philemon','Philemon','К Филимону',kabAp('flm',1),57),B('Hebrews','Hebrews','К Евреям',kabAp('evr',13),58),B('James','James','Иакова',kabAp('iak',5),59),
-  B('1 Peter','1 Peter','1 Петра',kabAp('1pet',5),60),B('2 Peter','2 Peter','2 Петра',kabAp('2pet',3),61),B('1 John','1 John','1 Иоанна',kabAp('1in',5),62),
-  B('2 John','2 John','2 Иоанна',kabAp('2in',1),63),B('3 John','3 John','3 Иоанна',kabAp('3in',1),64),B('Jude','Jude','Иуды',kabAp('iud',1),65),
-  B('Revelation','Revelation','Апокалипсис',kabAp('otkr',22),66)]},
- {num:'Stage 3',name:'Psalms',note:'A psalm a day, alongside everything else. Russian numbering.',books:[
-  B('Psalms','Psalms','Псалтирь',ab('19','ps',150),19)]},
- {num:'Stage 4',name:'Old Testament stories',books:[
-  B('Genesis','Genesis','Бытие',rng(50).map(i=>KAB+'vethij-zavet/bytija/glava_'+i+'.mp3'),1),B('Exodus','Exodus','Исход',ab('02','ex',40),2),
-  B('Joshua','Joshua','Иисус Навин',ab('06','jos',24),6),B('Judges','Judges','Судьи',ab('07','jud',21),7),B('Ruth','Ruth','Руфь',ab('08','ru',4),8),
-  B('1 Kings','1 Samuel','1 Царств',ab('09','1ki',31),9),B('2 Kings','2 Samuel','2 Царств',ab('10','2ki',24),10),
-  B('3 Kings','1 Kings','3 Царств',ab('11','3ki',22),11),B('4 Kings','2 Kings','4 Царств',ab('12','4ki',25),12)]},
- {num:'Stage 5',name:'Wisdom books',books:[
-  B('Job','Job','Иов',ab('18','job',42),18),B('Proverbs','Proverbs','Притчи',ab('20','pr',31),20),B('Ecclesiastes','Ecclesiastes','Екклесиаст',ab('21','ec',12),21),
-  B('Song of Songs','Song of Songs','Песнь Песней',rng(8).map(i=>KAB+'vethij-zavet/pesn-pesnej/0'+i+'_glava_'+i+'.mp3'),22)]},
- {num:'Stage 6',name:'Prophets',books:[
-  B('Isaiah','Isaiah','Исаия',ab('23','isa',66),23),B('Jeremiah','Jeremiah','Иеремия',ab('24','jer',52),24),B('Lamentations','Lamentations','Плач Иеремии',ab('25','la',5),25),
-  B('Ezekiel','Ezekiel','Иезекииль',ab('26','eze',48),26),B('Daniel','Daniel','Даниил',ab('27','da',12),27),B('Hosea','Hosea','Осия',ab('28','ho',14),28),
-  B('Joel','Joel','Иоиль',ab('29','joe',3),29),B('Amos','Amos','Амос',ab('30','am',9),30),B('Obadiah','Obadiah','Авдий',ab('31','ob',1),31),
-  B('Jonah','Jonah','Иона',ab('32','jon',4),32),B('Micah','Micah','Михей',ab('33','mic',7),33),B('Nahum','Nahum','Наум',ab('34','na',3),34),
-  B('Habakkuk','Habakkuk','Аввакум',ab('35','hab',3),35),B('Zephaniah','Zephaniah','Софония',ab('36','sof',3),36),B('Haggai','Haggai','Аггей',ab('37','hag',2),37),
-  B('Zechariah','Zechariah','Захария',ab('38','zec',14),38),B('Malachi','Malachi','Малахия',ab('39','mal',4),39)]},
- {num:'Stage 7',name:'The rest of the Old Testament',books:[
-  B('Leviticus','Leviticus','Левит',ab('03','le',27),3),B('Numbers','Numbers','Числа',ab('04','nu',36),4),B('Deuteronomy','Deuteronomy','Второзаконие',ab('05','de',34),5),
-  B('1 Chronicles','1 Chronicles','1 Паралипоменон',ab('13','1ch',29),13),B('2 Chronicles','2 Chronicles','2 Паралипоменон',ab('14','2ch',36),14),
-  B('Ezra','Ezra','Ездра',ab('15','ezr',10),15),B('Nehemiah','Nehemiah','Неемия',ab('16','ne',13),16),B('Esther','Esther','Есфирь',ab('17','es',10),17)]}
+/* Books: code, English, Russian, Lithuanian, chapters, Protestant number (for English/Lithuanian audio and jw.org), Russian audio pattern, text codes, extras */
+const SEC=[
+ ['Pentateuch · Пятикнижие',[
+  ['GEN','Genesis','Бытие','Pradžios',50,1,ruPat('bytija','Genesis_','.MP3')],
+  ['EXO','Exodus','Исход','Išėjimo',40,2,ruPat('Ishod','Exodus-')],
+  ['LEV','Leviticus','Левит','Kunigų',27,3,ruPat('Levit','Leviticus-')],
+  ['NUM','Numbers','Числа','Skaičių',36,4,ruPat('Chisel','Numbers-')],
+  ['DEU','Deuteronomy','Второзаконие','Pakartoto Įstatymo',34,5,ruPat('Vtorozakonie','Deuteronomy_')]]],
+ ['Historical books · Исторические книги',[
+  ['JOS','Joshua','Иисус Навин','Jozuės',24,6,ruPat('I-navin','Joshua_')],
+  ['JDG','Judges','Судьи','Teisėjų',21,7,ruPat('Sudej','Judges_')],
+  ['RUT','Ruth','Руфь','Rūtos',4,8,ruPat('Rufi','Ruth_')],
+  ['1SA','1 Samuel','1 Царств','1 Samuelio',31,9,ruPat('carstv-1','1-carstv-')],
+  ['2SA','2 Samuel','2 Царств','2 Samuelio',24,10,ruPat('carstv-2','2_carstv_')],
+  ['1KI','1 Kings','3 Царств','1 Karalių',22,11,ruPat('carstv-3','3-carstv-')],
+  ['2KI','2 Kings','4 Царств','2 Karalių',25,12,c=>AZ+'audiobiblia_bondarenko/12-4-ya-Tsarstv/'+c+'.mp3'],
+  ['1CH','1 Chronicles','1 Паралипоменон','1 Metraščių',29,13,c=>AZ+'audiobiblia_bondarenko/13-1-ya-Paralipomenon/'+c+'.mp3'],
+  ['2CH','2 Chronicles','2 Паралипоменон','2 Metraščių',36,14,ruPat('2-ya-Paralipomenon','2Chronicles_'),{extras:[{id:'M',label:'Молитва Манассии',en:'Prayer of Manasseh',ru:AZ+'biblija_prudovskij/2-ya-Paralipomenon/Manasseh.mp3',enText:['MAN',0]}]}],
+  ['1ES','1 Esdras','2 Ездры','',9,0,ruPat('2-ezdry','2_Esdras_'),{dc:1}],
+  ['EZR','Ezra','1 Ездры','Ezros',10,15,ruPat('1-ezdry','1-ezdry-')],
+  ['NEH','Nehemiah','Неемия','Nehemijo',13,16,ruPat('Neemii','Nehemiah_')],
+  ['TOB','Tobit','Товит','Tobito',14,0,ruPat('Tobit','Tobit_'),{dc:1}],
+  ['JDT','Judith','Иудифь','Juditos',16,0,ruPat('Judith','Judith_'),{dc:1}],
+  ['EST','Esther','Есфирь','Esteros',10,17,ruPat('Esther','Esther_')]]],
+ ['Wisdom and poetry · Учительные книги',[
+  ['JOB','Job','Иов','Jobo',42,18,ruPat('Iov','Iov_'),{extras:[{id:'A',label:'Добавление (Славянская Библия)',en:'Addition from the Slavonic Bible',ru:AZ+'biblija_prudovskij/Iov/Iov_43.mp3'}]}],
+  ['PSA','Psalms','Псалтирь','Psalmynas',150,19,ruPat('psaltir','Psalms_','.mp3',3),{psalms:1}],
+  ['PRO','Proverbs','Притчи','Patarlių',31,20,ruPat('kniga_pritchej','Proverbs_')],
+  ['ECC','Ecclesiastes','Екклесиаст','Mokytojo',12,21,ruPat('Ecclesiastes','Ecclesiastes_')],
+  ['SNG','Song of Songs','Песнь Песней','Giesmių giesmė',8,22,ruPat('pesni-pesnej','Song_of_Solomon_','.MP3')],
+  ['WIS','Wisdom of Solomon','Премудрость Соломона','Išminties',19,0,ruPat('premudrosti','Wisdom_'),{dc:1}],
+  ['SIR','Sirach','Премудрость Иисуса, сына Сирахова','Siracido',51,0,ruPat('Sirach','Sirach_'),{dc:1,pre:[{id:'P',label:'Предисловие',en:'Preface',ru:AZ+'biblija_prudovskij/Sirach/Sirach_00.mp3'}]}]]],
+ ['Prophets · Пророки',[
+  ['ISA','Isaiah','Исаия','Izaijo',66,23,ruPat('Isaiah','Isaiah_')],
+  ['JER','Jeremiah','Иеремия','Jeremijo',52,24,ruPat('Jeremiah','Jeremiah_')],
+  ['LAM','Lamentations','Плач Иеремии','Raudų',5,25,ruPat('Jeremiah','Lamentations_')],
+  ['LJE','Letter of Jeremiah','Послание Иеремии','Jeremijo laiškas',1,0,()=>AZ+'biblija_prudovskij/Jeremiah/Epistle_of_Jeremiah.mp3',{dc:1,noText:1}],
+  ['BAR','Baruch','Варух','Barucho',5,0,ruPat('Baruh','Baruh_'),{dc:1}],
+  ['EZK','Ezekiel','Иезекииль','Ezechielio',48,26,ruPat('Iezekiil','Ezekiel_')],
+  ['DAN','Daniel','Даниил','Danieliaus',14,27,ruPat('Daniil','Daniel_'),{enMax:12}],
+  ['HOS','Hosea','Осия','Ozėjo',14,28,ruPat('Osija','Hosea_')],
+  ['JOL','Joel','Иоиль','Joelio',3,29,ruPat('Ioil','Joel_')],
+  ['AMO','Amos','Амос','Amoso',9,30,ruPat('Amos','Amos_')],
+  ['OBA','Obadiah','Авдий','Abdijo',1,31,ruPat('Avdij','Obadiah_')],
+  ['JON','Jonah','Иона','Jonos',4,32,ruPat('Iona','Jonah_')],
+  ['MIC','Micah','Михей','Michėjo',7,33,ruPat('Mihej','Micah_')],
+  ['NAM','Nahum','Наум','Nahumo',3,34,ruPat('Naum','Nahum_')],
+  ['HAB','Habakkuk','Аввакум','Habakuko',3,35,ruPat('Avvakum','Habakkuk_')],
+  ['ZEP','Zephaniah','Софония','Sofonijo',3,36,ruPat('Sofonia','Zephaniah_')],
+  ['HAG','Haggai','Аггей','Agėjo',2,37,ruPat('Aggei','Haggai_')],
+  ['ZEC','Zechariah','Захария','Zacharijo',14,38,ruPat('Zaharija','Zechariah_')],
+  ['MAL','Malachi','Малахия','Malachijo',4,39,ruPat('Malahia','Malachi_')]]],
+ ['Maccabees and 3 Esdras · Маккавейские книги',[
+  ['1MA','1 Maccabees','1 Маккавейская','1 Makabiejų',16,0,ruPat('1Mak','1-Maccabees-'),{dc:1}],
+  ['2MA','2 Maccabees','2 Маккавейская','2 Makabiejų',15,0,ruPat('2Mak','2_Maccabees_'),{dc:1}],
+  ['3MA','3 Maccabees','3 Маккавейская','3 Makabiejų',7,0,ruPat('3Mak','3_Maccabees_'),{dc:1}],
+  ['2ES','2 Esdras','3 Ездры','',16,0,ruPat('3-ezdry','3_Esdras_'),{dc:1}]]],
+ ['Gospels and Acts · Евангелия и Деяния',[
+  ['MAT','Matthew','От Матфея','Mato',28,40,ruNT('MAT')],
+  ['MRK','Mark','От Марка','Morkaus',16,41,ruNT('MRK')],
+  ['LUK','Luke','От Луки','Luko',24,42,ruNT('LUK')],
+  ['JHN','John','От Иоанна','Jono',21,43,ruNT('JHN')],
+  ['ACT','Acts','Деяния апостолов','Apaštalų darbai',28,44,ruNT('ACT')]]],
+ ['Catholic epistles · Соборные послания',[
+  ['JAS','James','Иакова','Jokūbo',5,59,ruNT('JAS')],
+  ['1PE','1 Peter','1 Петра','1 Petro',5,60,ruNT('1PE')],
+  ['2PE','2 Peter','2 Петра','2 Petro',3,61,ruNT('2PE')],
+  ['1JN','1 John','1 Иоанна','1 Jono',5,62,ruNT('1JN')],
+  ['2JN','2 John','2 Иоанна','2 Jono',1,63,ruNT('2JN')],
+  ['3JN','3 John','3 Иоанна','3 Jono',1,64,ruNT('3JN')],
+  ['JUD','Jude','Иуды','Judo',1,65,ruNT('JUD')]]],
+ ['Letters of Paul · Послания Павла',[
+  ['ROM','Romans','К Римлянам','Romiečiams',16,45,ruNT('ROM')],
+  ['1CO','1 Corinthians','1 Коринфянам','1 Korintiečiams',16,46,ruNT('1CO')],
+  ['2CO','2 Corinthians','2 Коринфянам','2 Korintiečiams',13,47,ruNT('2CO')],
+  ['GAL','Galatians','К Галатам','Galatams',6,48,ruNT('GAL')],
+  ['EPH','Ephesians','К Ефесянам','Efeziečiams',6,49,ruNT('EPH')],
+  ['PHP','Philippians','К Филиппийцам','Filipiečiams',4,50,ruNT('PHP')],
+  ['COL','Colossians','К Колоссянам','Kolosiečiams',4,51,ruNT('COL')],
+  ['1TH','1 Thessalonians','1 Фессалоникийцам','1 Tesalonikiečiams',5,52,ruNT('1TH')],
+  ['2TH','2 Thessalonians','2 Фессалоникийцам','2 Tesalonikiečiams',3,53,ruNT('2TH')],
+  ['1TI','1 Timothy','1 Тимофею','1 Timotiejui',6,54,ruNT('1TI')],
+  ['2TI','2 Timothy','2 Тимофею','2 Timotiejui',4,55,ruNT('2TI')],
+  ['TIT','Titus','К Титу','Titui',3,56,ruNT('TIT')],
+  ['PHM','Philemon','К Филимону','Filemonui',1,57,ruNT('PHM')],
+  ['HEB','Hebrews','К Евреям','Hebrajams',13,58,ruNT('HEB')]]],
+ ['Revelation · Откровение',[
+  ['REV','Revelation','Откровение Иоанна','Apreiškimas Jonui',22,66,ruNT('REV')]]]
 ];
+/* Synodal psalm number → Hebrew/English psalm numbers */
+function psHeb(n){if(n<=8)return[n];if(n===9)return[9,10];if(n<=112)return[n+1];if(n===113)return[114,115];if(n===114)return[116];if(n===115)return[];if(n<=145)return[n+1];if(n===146)return[147];if(n===147)return[];if(n<=150)return[n];return[]}
 
-/* ---------- State ---------- */
-const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let heard=store.get('bib2-heard',{});          // "Mark|3" -> 1
-let kinds=store.get('bib2-engkind',{});        // book -> index of the English file pattern that worked
-const langsEl=document.getElementById('langs'),modeEl=document.getElementById('mode');
-langsEl.value=store.get('bib3-langs','ru,en,lt');modeEl.value=store.get('bib2-mode','next');
-langsEl.onchange=()=>{store.set('bib3-langs',langsEl.value);
-  if(!chip||!queue.length)return;const cur=queue[qi];const bk=BOOK[chip.dataset.book];const fresh=tracksFor(bk,+chip.dataset.c);
-  const done=new Set(queue.slice(0,qi).map(t=>t.lang));const rest=fresh.filter(t=>!done.has(t.lang)&&(!cur||t.lang!==cur.lang));
-  queue=cur?[cur,...rest]:rest;qi=0;if(cur)showNow(cur);};modeEl.onchange=()=>store.set('bib2-mode',modeEl.value);
+/* Build the unit list (chapters + extras) for every book */
+const BOOKS=[];const BY={};
+for(const [secName,list] of SEC){
+  const sec={name:secName,books:[]};
+  for(const [code,en,ru,lt,n,pb,ruFn,opt={}] of list){
+    const units=[];
+    const mk=(id,label,o)=>({id:String(id),label:String(label),...o});
+    for(const p of (opt.pre||[]))units.push(mk(p.id,p.label,{ru:p.ru,enName:p.en,extra:true}));
+    for(let c=1;c<=n;c++){
+      const u=mk(c,c,{ru:ruFn(c)});
+      if(opt.psalms){const hs=psHeb(c);u.heb=hs;u.en=hs.map(h=>enAudio(19,h));u.lt=hs.map(h=>[19,h]);u.ruText=[code,c-1];u.enText=hs.map(h=>[code,h-1]);u.ltText=hs.map(h=>[code,h-1]);
+        if(c===115)u.covered='114';if(c===147)u.covered='146';}
+      else{const okEn=pb&&(!opt.enMax||c<=opt.enMax);u.en=okEn?[enAudio(pb,c)]:[];u.lt=okEn?[[pb,c]]:[];
+        u.ruText=opt.noText?null:[code,c-1];u.enText=okEn||opt.dc?[[code,c-1]]:[];u.ltText=okEn?[[code,c-1]]:[];
+        if(opt.dc){u.ruText=null;}}
+      units.push(u);
+    }
+    if(opt.psalms)units.push(mk(151,151,{en:[],lt:[],enText:[['PS2',0]],ltText:[],ruText:null,extra:true}));
+    for(const e of (opt.extras||[]))units.push(mk(e.id,e.label,{ru:e.ru,enName:e.en,en:[],lt:[],enText:e.enText?[e.enText]:[],ltText:[],ruText:null,extra:true}));
+    const bk={code,en,ru,lt,n,pb,sec,units,dc:!!opt.dc,psalms:!!opt.psalms};
+    units.forEach((u,i)=>{u.book=bk;u.idx=i;u.key=code+'|'+u.id});
+    sec.books.push(bk);BOOKS.push(bk);BY[code]=bk;
+  }
+  SEC.sec=SEC.sec||[];SEC.sec.push(sec);
+}
+const ALL_UNITS=BOOKS.flatMap(b=>b.units);
+ALL_UNITS.forEach((u,i)=>u.gi=i);
+const LANG_NAME={ru:'Russian',en:'English',lt:'Lithuanian'};
+const SRC_NAME={ru:'Синодальный перевод',en:'World English Bible',lt:'Naujojo pasaulio vertimas'};
+function unitTitle(u,lang){const b=u.book;
+  if(u.extra&&u.id==='151')return lang==='en'?'Psalm 151':lang==='lt'?'151 psalmė':'Псалом 151';
+  if(u.extra)return lang==='en'?(u.enName||u.label):u.label;
+  if(b.psalms){const h=u.heb||[];if(lang==='ru')return 'Псалом '+u.id;const hs=h.length?h.join(lang==='en'?' and ':' ir '):'—';return (lang==='en'?'Psalm ':'Psalmė ')+hs;}
+  if(lang==='ru')return b.ru+', глава '+u.id;if(lang==='lt')return (b.lt||b.en)+' '+u.id;return b.en+' '+u.id;}
 
-/* ---------- Render ---------- */
-const root=document.getElementById('plan');const BOOK={};
-root.innerHTML=plan.map((st,si)=>`<section><div class="shead"><h2><span>${st.num}</span>${st.name}</h2><span class="scount" id="sc${si}"></span></div>
- ${st.note?`<p class="note">${st.note}</p>`:''}<div class="books">${st.books.map(bk=>{BOOK[bk.key]=bk;return `
- <div class="book" data-book="${bk.key}"><div class="bname">${bk.en}<small>${bk.ru} · ${bk.ruUrls.length} ${bk.ruUrls.length===1?'chapter':'chapters'}</small><span class="bdone" id="bd-${bk.key.replace(/\s/g,'_')}"></span></div>
-  <div class="chips">${bk.ruUrls.map((u,i)=>`<button class="ch${heard[bk.key+'|'+(i+1)]?' done':''}" type="button" data-book="${bk.key}" data-c="${i+1}" aria-label="${bk.en} ${i+1}">${i+1}</button>`).join('')}</div></div>`}).join('')}</div></section>`).join('');
-const allChips=[...document.querySelectorAll('.ch')];
-function update(){let C=0,CD=0,Bk=0,BD=0;
-  plan.forEach((st,si)=>{let n=0,d=0;st.books.forEach(bk=>{const t=bk.ruUrls.length;let h=0;for(let c=1;c<=t;c++)if(heard[bk.key+'|'+c])h++;
-    n+=t;d+=h;C+=t;CD+=h;Bk++;if(h===t)BD++;const el=document.getElementById('bd-'+bk.key.replace(/\s/g,'_'));el.textContent=h===t?'✓ finished':h?h+' / '+t:''});
-    document.getElementById('sc'+si).textContent=d+' / '+n+' chapters'});
-  cDone.textContent=CD.toLocaleString('en');cAll.textContent=C.toLocaleString('en');bDone.textContent=BD;bAll.textContent=Bk;
-  const pc=C?Math.round(CD/C*1000)/10:0;pct.textContent=pc+'%';barAll.style.width=pc+'%';}
+/* =====================================================================
+   STATE (one versioned object in localStorage, with migration from the old pages)
+   ===================================================================== */
+const KEY='bible-v3';
+const S={heard:{},best:{},qs:[],langs:'ru,en,lt',mode:'next',rate:1,follow:true,last:null,open:{}};
+const store={load(){try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v&&typeof v==='object')Object.assign(S,v);else migrate();}catch(e){}},
+  save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}};
+function migrate(){try{
+  const OLD={'Mark':'MRK','Matthew':'MAT','Luke':'LUK','John':'JHN','Acts':'ACT','Romans':'ROM','1 Corinthians':'1CO','2 Corinthians':'2CO','Galatians':'GAL','Ephesians':'EPH','Philippians':'PHP','Colossians':'COL','1 Thessalonians':'1TH','2 Thessalonians':'2TH','1 Timothy':'1TI','2 Timothy':'2TI','Titus':'TIT','Philemon':'PHM','Hebrews':'HEB','James':'JAS','1 Peter':'1PE','2 Peter':'2PE','1 John':'1JN','2 John':'2JN','3 John':'3JN','Jude':'JUD','Revelation':'REV','Psalms':'PSA','Genesis':'GEN','Exodus':'EXO','Joshua':'JOS','Judges':'JDG','Ruth':'RUT','1 Kings':'1SA','2 Kings':'2SA','3 Kings':'1KI','4 Kings':'2KI','Job':'JOB','Proverbs':'PRO','Ecclesiastes':'ECC','Song of Songs':'SNG','Isaiah':'ISA','Jeremiah':'JER','Lamentations':'LAM','Ezekiel':'EZK','Daniel':'DAN','Hosea':'HOS','Joel':'JOL','Amos':'AMO','Obadiah':'OBA','Jonah':'JON','Micah':'MIC','Nahum':'NAM','Habakkuk':'HAB','Zephaniah':'ZEP','Haggai':'HAG','Zechariah':'ZEC','Malachi':'MAL','Leviticus':'LEV','Numbers':'NUM','Deuteronomy':'DEU','1 Chronicles':'1CH','2 Chronicles':'2CH','Ezra':'EZR','Nehemiah':'NEH','Esther':'EST'};
+  const g=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+  const conv=k=>{const [b,c]=k.split('|');return OLD[b]?OLD[b]+'|'+c:null};
+  const h=g('bib2-heard')||{};for(const k in h){const n=conv(k);if(n)S.heard[n]=1}
+  const b=g('bib3-best')||{};for(const k in b){const n=conv(k);if(n)S.best[n]=b[k]}
+  const q=g('bib3-qs')||[];for(const x of q){if(OLD[x.book])S.qs.push({b:OLD[x.book],u:String(x.c),v:x.v||'',q:x.q,t:x.t||Date.now()})}
+  const l=g('bib3-langs');if(typeof l==='string'&&l)S.langs=l;const m=g('bib2-mode');if(m)S.mode=m;
+  const last=g('bib2-last');if(last){const n=conv(last);if(n){const [bk,id]=n.split('|');S.last={b:bk,u:id,ti:0,t:0}}}
+  store.save();}catch(e){}}
+store.load();
+if(!/^[a-z,]+$/.test(S.langs))S.langs='ru,en,lt';
 
-/* ---------- Player ---------- */
-const au=document.getElementById('au'),np=document.getElementById('np');
-let queue=[],qi=0,chip=null,candI=0;
-function tracksFor(bk,c){const out=[];const order=langsEl.value.split(',');
-  for(const L of order){
-    if(L==='ru')out.push({lang:'ru',label:bk.ru+', глава '+c,cands:[bk.ruUrls[c-1]]});
-    if(L==='en'){const eChs=bk.eb===19?psEng(c):[c];
-      if(bk.eb===19&&!eChs.length)out.push({lang:'en',label:'Psalm '+c+' (Russian numbering)',cands:[],skip:'The English for this psalm was included with the previous one.'});
-      eChs.forEach(ec=>{let cs=engCands(bk.eb,ec);const k=kinds[bk.eb];if(k!=null&&cs[k]){cs=[cs[k],...cs.filter((_,i)=>i!==k)]}
-        out.push({lang:'en',label:(bk.eb===19?'Psalm ':bk.en+' ')+ec,cands:cs,eb:bk.eb,all:engCands(bk.eb,ec)})});}
-    if(L==='lt'){const lChs=bk.eb===19?psEng(c):[c];
-      lChs.forEach(lc=>out.push({lang:'lt',label:(bk.eb===19?'Psalmyno ':bk.en+' ')+lc+' (lietuviškai)',cands:null,eb:bk.eb,lc}));}}
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.max(0,Math.round(t));return Math.floor(t/60)+':'+pad(t%60,2)};
+let toastT;function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+const langsArr=()=>S.langs.split(',').filter(l=>/^(ru|en|lt)$/.test(l));
+
+/* Lithuanian audio: New World Translation from jw.org, resolved per book and cached */
+const LT_CACHE={};
+async function ltList(b){
+  if(LT_CACHE[b])return LT_CACHE[b];
+  let m=null;try{m=JSON.parse(localStorage.getItem('lt-'+b)||'null')}catch(e){}
+  if(!m){const r=await fetch('https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?output=json&pub=nwt&fileformat=MP3&alllangs=0&langwritten=L&txtCMSLang=L&booknum='+b);
+    if(!r.ok)throw new Error('lt '+r.status);const j=await r.json();const list=(((j.files||{}).L||{}).MP3)||[];m={};
+    for(const e of list){if(e.track&&e.file&&e.file.url&&(e.bibleBookNumber==null||e.bibleBookNumber===b)&&!m[e.track])m[e.track]=e.file.url}
+    try{localStorage.setItem('lt-'+b,JSON.stringify(m))}catch(e){}}
+  LT_CACHE[b]=m;return m;}
+async function ltUrl(b,c){try{const m=await ltList(b);return m[c]||null}catch(e){return null}}
+
+/* Text: one JSON file per book and language */
+const TXT={};
+async function bookText(lang,code){const k=lang+'/'+code;if(TXT[k]!==undefined)return TXT[k];
+  TXT[k]=null;try{const r=await fetch('data/'+k+'.json');if(r.ok){const j=await r.json();TXT[k]=j&&j.c?j.c:null}}catch(e){}
+  return TXT[k];}
+function textRefs(u,lang){if(lang==='ru')return u.ruText?[u.ruText]:[];if(lang==='en')return u.enText||[];return u.ltText||[];}
+async function chapterText(u,lang){const refs=textRefs(u,lang);const out=[];
+  for(const [code,ci] of refs){const c=await bookText(lang,code);const vs=c&&c[ci];out.push({code,ci,verses:vs||null})}
   return out;}
-function startChapter(b){chip&&chip.classList.remove('now','en','lt');chip=b;const bk=BOOK[b.dataset.book];queue=tracksFor(bk,+b.dataset.c);qi=0;
-  store.set('bib2-last',b.dataset.book+'|'+b.dataset.c);playTrack();b.scrollIntoView({block:'nearest',behavior:'smooth'});}
-function showNow(t,extra){const nx=queue[qi+1];const after=nx?nx.lang.toUpperCase()+' '+nx.label:(modeEl.value==='stop'?'stop':'next chapter');
-  np.innerHTML='<span class="lang '+t.lang+'">'+t.lang.toUpperCase()+'</span><b></b>'+(extra?' · '+extra:'')+'<br><small class="up"></small>';np.querySelector('b').textContent=t.label;np.querySelector('.up').textContent='Up next: '+after;
-  chip.classList.add('now');chip.classList.toggle('en',t.lang==='en');chip.classList.toggle('lt',t.lang==='lt');
-  if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:t.label,artist:t.lang==='en'?'World English Bible':t.lang==='lt'?'Naujojo pasaulio vertimas':'Синодальный перевод'});}
-async function playTrack(){const t=queue[qi];if(!t){chapterDone();return}
-  if(t.lang==='lt'&&t.cands===null){const my=qi,myQ=queue;showNow(t,'loading…');
-    try{const u=await ltUrl(t.eb,t.lc);t.cands=u?[u]:[]}catch(e){t.cands=[]}
-    if(queue!==myQ||qi!==my)return;
-    if(!t.cands.length){showNow(t,'not available, skipping');setTimeout(()=>{if(queue===myQ&&qi===my){qi++;playTrack()}},1500);return}}
-  if(t.skip||!t.cands.length){qi++;playTrack();return}
-  candI=0;showNow(t);au.src=t.cands[0];au.play().catch(()=>{});}
-au.addEventListener('error',()=>{const t=queue[qi];if(!t||!au.getAttribute('src'))return;
-  candI++;if(candI<t.cands.length){au.src=t.cands[candI];au.play().catch(()=>{});return}
-  showNow(t,'could not be loaded, skipping');setTimeout(()=>{qi++;playTrack()},1500);});
-au.addEventListener('playing',()=>{const t=queue[qi];if(t&&t.lang==='en'&&t.eb){const k=t.all.indexOf(au.src);if(k>=0&&kinds[t.eb]!==k){kinds[t.eb]=k;store.set('bib2-engkind',kinds)}}});
-au.addEventListener('ended',()=>{qi++;playTrack()});
-function nextChip(b){const i=allChips.indexOf(b);const nx=allChips[i+1];if(!nx)return null;
-  if(modeEl.value==='book'&&nx.dataset.book!==b.dataset.book)return null;return nx;}
-function chapterDone(){heard[chip.dataset.book+'|'+chip.dataset.c]=1;store.set('bib2-heard',heard);chip.classList.add('done');update();
-  const nx=modeEl.value==='stop'?null:nextChip(chip);
-  if(nx)startChapter(nx);else{chip.classList.remove('now','en','lt');np.textContent='Finished.'}}
-root.addEventListener('click',e=>{const b=e.target.closest('.ch');if(!b)return;
-  if(b===chip&&au.src){au.paused?au.play():au.pause();return}startChapter(b)});
-if('mediaSession' in navigator){navigator.mediaSession.setActionHandler('nexttrack',()=>{if(!chip)return;if(qi<queue.length-1){qi++;playTrack()}else{const n=nextChip(chip);if(n)startChapter(n)}});
-  navigator.mediaSession.setActionHandler('previoustrack',()=>{if(!chip)return;const i=allChips.indexOf(chip);if(i>0)startChapter(allChips[i-1])})}
-(function(){const last=store.get('bib2-last',null);if(!last)return;const [bk,c]=last.split('|');const b=allChips.find(x=>x.dataset.book===bk&&x.dataset.c===c);if(!b)return;
-  np.innerHTML='Last time: <b></b> · <button type="button" id="resume">Resume</button>';np.querySelector('b').textContent=BOOK[bk].en+' '+c+' · '+BOOK[bk].ru;
-  document.getElementById('resume').onclick=()=>startChapter(b);})();
 
-/* ---------- Understood best + questions ---------- */
-let best=store.get('bib3-best',{});      // "Mark|3" -> 'ru'|'en'|'lt'
-let qs=store.get('bib3-qs',[]);          // [{book,c,v,q,t}]
-const rateEl=document.getElementById('rate'),ctools=document.getElementById('ctools'),askF=document.getElementById('ask');
-const keyOf=b=>b.dataset.book+'|'+b.dataset.c;
-function paintChips(){allChips.forEach(b=>{const k=keyOf(b);if(best[k])b.dataset.best=best[k];else delete b.dataset.best;b.classList.toggle('hasq',qs.some(q=>q.book+'|'+q.c===k))})}
-function paintRate(){if(!chip)return;const v=best[keyOf(chip)];rateEl.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.l===v))}
-rateEl.addEventListener('click',e=>{const x=e.target.closest('button');if(!x||!chip)return;const k=keyOf(chip);best[k]=best[k]===x.dataset.l?undefined:x.dataset.l;if(!best[k])delete best[k];
-  store.set('bib3-best',best);paintRate();paintChips();rateStats();});
-function rateStats(){const c={ru:0,en:0,lt:0};Object.values(best).forEach(v=>c[v]=(c[v]||0)+1);const n=c.ru+c.en+c.lt;
-  document.getElementById('rateStats').textContent=n?'Understood best: RU '+c.ru+' · EN '+c.en+' · LT '+c.lt:'';}
-const SRC={ru:'Russian Synodal',en:'English World English Bible',lt:'Lithuanian New World Translation'};
-function prompt(q){const bk=BOOK[q.book];return 'I am listening to the Bible chapter by chapter in Russian (Synodal), English (World English Bible) and Lithuanian. '+
-  'This is about '+bk.en+' chapter '+q.c+(q.v?', verse '+q.v:'')+' ('+bk.ru+' '+q.c+(q.v?':'+q.v:'')+'). '+
-  'Please explain clearly and simply, note if the translations differ here, and mention how the Orthodox Church traditionally understands it. My question: '+q.q;}
-function claudeUrl(q){return 'https://claude.ai/new?q='+encodeURIComponent(prompt(q))}
-function copy(text,btn){const done=()=>{const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1500)};
-  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done,()=>{});}
-function qItem(q,i){return `<li><span class="ref">${esc(BOOK[q.book].en)} ${q.c}${q.v?':'+esc(q.v):''}</span><span class="qt"></span><span class="acts">
-  <a class="qbtn" href="${claudeUrl(q)}" target="_blank" rel="noopener">Ask Claude</a><button type="button" data-copy="${i}">Copy</button><button type="button" data-del="${i}">Delete</button></span></li>`}
-function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function renderQs(){const all=document.getElementById('allQs');all.innerHTML=qs.map(qItem).join('');all.querySelectorAll('.qt').forEach((el,i)=>el.textContent=qs[i].q);
-  document.getElementById('qsEmpty').hidden=qs.length>0;
-  const cl=document.getElementById('chapterQs');if(chip){const k=keyOf(chip);const idx=qs.map((q,i)=>[q,i]).filter(([q])=>q.book+'|'+q.c===k);
-    cl.innerHTML=idx.map(([q,i])=>qItem(q,i)).join('');cl.querySelectorAll('.qt').forEach((el,j)=>el.textContent=idx[j][0].q)}
-  paintChips();}
-document.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c){copy(prompt(qs[+c.dataset.copy]),c);return}
-  const d=e.target.closest('[data-del]');if(d){qs.splice(+d.dataset.del,1);store.set('bib3-qs',qs);renderQs()}});
-function saveQ(){const text=document.getElementById('askText').value.trim();if(!text||!chip)return null;
-  const q={book:chip.dataset.book,c:+chip.dataset.c,v:document.getElementById('askVerse').value.trim(),q:text,t:Date.now()};qs.push(q);store.set('bib3-qs',qs);
-  document.getElementById('askText').value='';document.getElementById('askVerse').value='';renderQs();return q;}
-askF.addEventListener('submit',e=>{e.preventDefault();const q=saveQ();if(q)window.open(claudeUrl(q),'_blank','noopener')});
-document.getElementById('askSave').onclick=()=>saveQ();
-document.getElementById('askOpen').onclick=()=>{askF.hidden=!askF.hidden;if(!askF.hidden){renderQs();document.getElementById('askText').focus()}};
-document.getElementById('askClose').onclick=()=>{askF.hidden=true};
-const _start=startChapter;startChapter=function(b){_start(b);ctools.hidden=false;paintRate();if(!askF.hidden)renderQs();};
-renderQs();rateStats();
-update();
+/* =====================================================================
+   PLAYER
+   ===================================================================== */
+const au=$('au');
+const P={u:null,tracks:[],ti:-1,urlI:0,resumeAt:0,errT:null,loadTok:0};
+function tracksFor(u){const out=[];
+  for(const L of langsArr()){
+    if(L==='ru'&&u.ru)out.push({lang:'ru',urls:[u.ru],title:unitTitle(u,'ru')});
+    if(L==='en')(u.en||[]).forEach((url,i)=>out.push({lang:'en',urls:[url],title:u.heb&&u.heb.length>1?'Psalm '+u.heb[i]:unitTitle(u,'en'),part:i}));
+    if(L==='lt')(u.lt||[]).forEach(([b,c],i)=>out.push({lang:'lt',urls:null,ltRef:[b,c],title:u.heb&&u.heb.length>1?u.heb[i]+' psalmė':unitTitle(u,'lt'),part:i}));}
+  return out;}
+function setNow(t,note){const l=$('npLang');l.textContent=t?t.lang.toUpperCase():'—';l.className='lang '+(t?t.lang:'');
+  $('npTitle').textContent=t?t.title:'Choose a chapter to begin';
+  const nx=P.tracks[P.ti+1];const after=!P.u?'':nx?('Next: '+nx.lang.toUpperCase()+' '+nx.title):(S.mode==='stop'?'Then: stop':S.mode==='book'&&isLastInBook(P.u)?'Then: end of book':'Then: next chapter');
+  $('npSub').textContent=note||after||'Tap any chapter number in the list.';
+  if('mediaSession' in navigator&&t&&window.MediaMetadata){try{navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:SRC_NAME[t.lang],album:'Библия · Bible · Biblija'})}catch(e){}}
+  updateChipNow();}
+const isLastInBook=u=>u.idx===u.book.units.length-1;
+async function startUnit(u,ti=0,time=0,auto=false){
+  if(!u)return;P.u=u;P.tracks=tracksFor(u);P.ti=Math.min(ti,Math.max(0,P.tracks.length-1));P.resumeAt=time;
+  S.last={b:u.book.code,u:u.id,ti:P.ti,t:time};store.save();
+  openReader(u,{show:!auto});
+  if(!P.tracks.length){setNow(null,'No recording in the chosen languages for this chapter.');return}
+  playTrack(P.ti);
+  // warm up Lithuanian list for this book in the background
+  if(u.lt&&u.lt.length)ltList(u.lt[0][0]).catch(()=>{});
+}
+async function playTrack(ti){
+  const t=P.tracks[ti];if(!t){unitDone();return}
+  P.ti=ti;P.urlI=0;const tok=++P.loadTok;clearTimeout(P.errT);
+  setNow(t);S.last={b:P.u.book.code,u:P.u.id,ti,t:P.resumeAt||0};store.save();
+  if(t.urls===null){setNow(t,'Loading…');const url=await ltUrl(t.ltRef[0],t.ltRef[1]);if(tok!==P.loadTok)return;t.urls=url?[url]:[];setNow(t);}
+  if(!t.urls.length){skip(t,'not available');return}
+  loadUrl(t.urls[0]);
+}
+function loadUrl(url){au.src=url;au.playbackRate=S.rate;au.load();
+  const at=P.resumeAt;P.resumeAt=0;
+  if(at>0){const seekOnce=()=>{au.removeEventListener('loadedmetadata',seekOnce);try{au.currentTime=Math.min(at,(au.duration||at+1)-1)}catch(e){}};au.addEventListener('loadedmetadata',seekOnce)}
+  const p=au.play();if(p&&p.catch)p.catch(()=>{setPlayIcon();});
+  if(!$('follow').checked)return;showLang(P.tracks[P.ti].lang);}
+function skip(t,why){setNow(t,t.lang.toUpperCase()+' '+why+', skipping…');const tok=P.loadTok;P.errT=setTimeout(()=>{if(tok===P.loadTok)playTrack(P.ti+1)},1200)}
+au.addEventListener('error',()=>{const t=P.tracks[P.ti];if(!t||!au.getAttribute('src'))return;
+  P.urlI++;if(t.urls&&P.urlI<t.urls.length){loadUrl(t.urls[P.urlI]);return}skip(t,'could not be loaded');});
+au.addEventListener('ended',()=>{playTrack(P.ti+1)});
+au.addEventListener('play',setPlayIcon);au.addEventListener('pause',setPlayIcon);
+function setPlayIcon(){$('playT').textContent=au.paused?'▶':'❚❚';$('playT').setAttribute('aria-label',au.paused?'Play':'Pause')}
+let lastSave=0;
+au.addEventListener('timeupdate',()=>{const d=au.duration||0;$('tCur').textContent=fmt(au.currentTime);$('tDur').textContent=fmt(d);
+  if(d&&!seeking)$('seek').value=Math.round(au.currentTime/d*1000);
+  const now=Date.now();if(P.u&&now-lastSave>5000){lastSave=now;S.last={b:P.u.book.code,u:P.u.id,ti:P.ti,t:Math.floor(au.currentTime)};store.save()}});
+let seeking=false;const seekEl=$('seek');
+seekEl.addEventListener('input',()=>{seeking=true;if(au.duration)$('tCur').textContent=fmt(seekEl.value/1000*au.duration)});
+seekEl.addEventListener('change',()=>{seeking=false;if(au.duration)au.currentTime=seekEl.value/1000*au.duration});
+function unitDone(){const u=P.u;if(!u)return;S.heard[u.key]=1;store.save();paintProgress();
+  const nx=S.mode==='stop'?null:S.mode==='book'&&isLastInBook(u)?null:ALL_UNITS[u.gi+1];
+  if(nx)startUnit(nx,0,0,true);else{setNow(null,'Finished. Pick the next chapter when you are ready.');P.u=null;updateChipNow()}}
+function togglePlay(){if(!P.u){const u=lastUnit()||BY.MRK.units[0];startUnit(u,S.last&&S.last.b===u.book.code&&S.last.u===u.id?S.last.ti:0,S.last&&S.last.b===u.book.code&&S.last.u===u.id?S.last.t:0);return}
+  if(au.paused){if(!au.getAttribute('src'))playTrack(P.ti);else au.play().catch(()=>{})}else au.pause()}
+function nextTrack(){if(!P.u)return;if(P.ti<P.tracks.length-1)playTrack(P.ti+1);else unitDone()}
+function prevTrack(){if(!P.u)return;if(au.currentTime>4){au.currentTime=0;return}if(P.ti>0)playTrack(P.ti-1);else{const pv=ALL_UNITS[P.u.gi-1];if(pv)startUnit(pv)}}
+$('playT').onclick=togglePlay;$('nextT').onclick=nextTrack;$('prevT').onclick=prevTrack;
+$('moreT').onclick=()=>{const p=$('player');p.classList.toggle('open');$('moreT').textContent=p.classList.contains('open')?'⌄':'⌃';fitPlayer()};
+function fitPlayer(){const h=$('player').getBoundingClientRect().height;document.documentElement.style.setProperty('--player-h',Math.ceil(h)+'px')}
+window.addEventListener('resize',fitPlayer);
+if('mediaSession' in navigator){const ms=navigator.mediaSession;const set=(a,f)=>{try{ms.setActionHandler(a,f)}catch(e){}};
+  set('play',()=>au.play().catch(()=>{}));set('pause',()=>au.pause());set('nexttrack',nextTrack);set('previoustrack',prevTrack);
+  set('seekbackward',d=>{au.currentTime=Math.max(0,au.currentTime-(d.seekOffset||15))});set('seekforward',d=>{au.currentTime=Math.min(au.duration||1e9,au.currentTime+(d.seekOffset||15))});
+  set('seekto',d=>{if(d.seekTime!=null)au.currentTime=d.seekTime});}
+/* settings */
+$('langs').value=S.langs;$('mode').value=S.mode;$('rate').value=String(S.rate);$('follow').checked=S.follow!==false;
+$('langs').onchange=()=>{S.langs=$('langs').value;store.save();if(!P.u)return;const cur=P.tracks[P.ti];const fresh=tracksFor(P.u);
+  const key=t=>t.lang+':'+(t.part||0);const played=P.tracks.slice(0,P.ti);const done=new Set(played.map(key));
+  const rest=fresh.filter(t=>!done.has(key(t))&&(!cur||key(t)!==key(cur)));
+  P.tracks=cur?[...played,cur,...rest]:rest;P.ti=cur?played.length:0;setNow(cur||null);renderTabs();};
+$('mode').onchange=()=>{S.mode=$('mode').value;store.save();if(P.u)setNow(P.tracks[P.ti])};
+$('rate').onchange=()=>{S.rate=parseFloat($('rate').value)||1;au.playbackRate=S.rate;store.save()};
+$('follow').onchange=()=>{S.follow=$('follow').checked;store.save()};
+
+/* =====================================================================
+   LIBRARY
+   ===================================================================== */
+const lastUnit=()=>{const l=S.last;if(!l||!BY[l.b])return null;return BY[l.b].units.find(u=>u.id===l.u)||null};
+function heardCount(b){return b.units.filter(u=>S.heard[u.key]).length}
+function renderLibrary(){
+  const secs=$('sections');secs.innerHTML=SEC.sec.map((sec,si)=>`<details class="sec" data-si="${si}"${S.open[si]?' open':''}><summary><h2>${esc(sec.name)}</h2><span class="cnt" id="sc${si}"></span></summary>
+   ${sec.books.map(b=>`<div class="book" data-b="${b.code}"><div class="row" role="button" tabindex="0" aria-expanded="false"><div class="nm"><b>${esc(b.en)}<span class="avail" title="Recordings: Russian / English / Lithuanian"><i class="ru on"></i><i class="en${b.pb?' on':''}"></i><i class="lt${b.pb?' on':''}"></i></span></b><small>${esc(b.ru)}${b.lt?' · '+esc(b.lt):''}</small></div><span class="st" id="st-${b.code}"></span></div><div class="chips" hidden></div></div>`).join('')}</details>`).join('');
+  secs.querySelectorAll('details.sec').forEach(d=>d.addEventListener('toggle',()=>{S.open[d.dataset.si]=d.open?1:0;store.save()}));
+  secs.addEventListener('click',e=>{const row=e.target.closest('.row');if(row){toggleBook(row.parentElement);return}
+    const ch=e.target.closest('.ch');if(ch){const u=BY[ch.dataset.b].units[+ch.dataset.i];if(P.u===u){togglePlay()}else startUnit(u)}});
+  secs.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('row')){e.preventDefault();toggleBook(e.target.parentElement)}});
+  paintProgress();renderContinue();}
+function toggleBook(bookEl,force){const chips=bookEl.querySelector('.chips');const open=force!==undefined?force:chips.hidden;
+  chips.hidden=!open;bookEl.querySelector('.row').setAttribute('aria-expanded',open);
+  if(open&&!chips.dataset.ready){const b=BY[bookEl.dataset.b];chips.innerHTML=b.units.map(u=>`<button class="ch" data-b="${b.code}" data-i="${u.idx}" aria-label="${esc(unitTitle(u,'en'))}">${esc(u.extra&&u.id!=='151'?u.id:u.label)}</button>`).join('');chips.dataset.ready=1;paintChips(b)}}
+function paintChips(b){const el=document.querySelector(`.book[data-b="${b.code}"] .chips`);if(!el||!el.dataset.ready)return;
+  el.querySelectorAll('.ch').forEach(c=>{const u=b.units[+c.dataset.i];c.classList.toggle('done',!!S.heard[u.key]);c.classList.toggle('now',P.u===u);
+    const best=S.best[u.key];if(best)c.dataset.best=best;else delete c.dataset.best;c.classList.toggle('hasq',S.qs.some(q=>q.b===b.code&&q.u===u.id))})}
+function updateChipNow(){document.querySelectorAll('.ch.now').forEach(c=>c.classList.remove('now'));if(P.u){const c=document.querySelector(`.ch[data-b="${P.u.book.code}"][data-i="${P.u.idx}"]`);if(c)c.classList.add('now')}}
+function paintProgress(){let T=0,H=0;
+  SEC.sec.forEach((sec,si)=>{let t=0,h=0;sec.books.forEach(b=>{const n=b.units.length,k=heardCount(b);t+=n;h+=k;const st=$('st-'+b.code);if(st){st.textContent=k===n?'✓ finished':k?k+' / '+n:n+(n===1?' chapter':' chapters');st.classList.toggle('done',k===n)}});
+    T+=t;H+=h;const sc=$('sc'+si);if(sc)sc.textContent=h+' / '+t});
+  $('prog').style.width=(T?H/T*100:0)+'%';document.querySelector('.top h1').title=H+' of '+T+' chapters heard';
+  BOOKS.forEach(paintChips);}
+function renderContinue(){const c=$('cont');const u=lastUnit();
+  if(u){const l=S.last;const tr=tracksFor(u)[l.ti||0];c.innerHTML=`<div class="t"><small>Continue</small><b>${esc(unitTitle(u,'en'))} · ${esc(unitTitle(u,'ru'))}</b><small>${tr?tr.lang.toUpperCase()+(l.t?' · '+fmt(l.t):''):''}</small></div><button class="primary" id="resume">▶ Resume</button><button id="openCont">Open text</button>`;
+    $('resume').onclick=()=>startUnit(u,l.ti||0,l.t||0);$('openCont').onclick=()=>openReader(u,{focus:true});}
+  else c.innerHTML=`<div class="t"><small>Where to start</small><b>Mark → Matthew → Luke → John → Acts, then Genesis and the Psalms.</b><small>Every chapter plays in Russian, then English, then Lithuanian. Tap a chapter number to begin.</small></div><button class="primary" id="startMark">▶ Start with Mark 1</button>`;
+  const sm=$('startMark');if(sm)sm.onclick=()=>startUnit(BY.MRK.units[0]);}
+
+/* =====================================================================
+   READER
+   ===================================================================== */
+const R={u:null,lang:null,sel:null};
+function openReader(u,o){o=o||{};const show=o.show!==false;R.u=u;if(!R.lang||!textRefs(u,R.lang).length)R.lang=pickLang(u);
+  const rd=$('reader');if(show){rd.removeAttribute('data-hide');$('lib').setAttribute('data-hide','');$('backBtn').hidden=false}
+  $('rTitle').textContent=unitTitle(u,'en')+' · '+unitTitle(u,'ru');
+  const bits=[];if(u.book.lt)bits.push(unitTitle(u,'lt'));if(u.covered)bits.push('In English and Lithuanian this psalm is part of Psalm '+(u.heb&&u.heb.length?u.heb.join('–'):'')+' (played with Synodal Psalm '+u.covered+').');if(u.book.dc)bits.push('Part of the Orthodox canon; no English or Lithuanian recording exists, so this chapter plays in Russian only.');
+  $('rSub').textContent=bits.join(' ');
+  renderTabs();renderBest();renderText();
+  $('prevCh').disabled=!ALL_UNITS[u.gi-1];$('nextCh').disabled=!ALL_UNITS[u.gi+1];
+  if(show&&(o.focus||window.innerWidth<900))window.scrollTo({top:0});
+  const d=document.querySelector(`.book[data-b="${u.book.code}"]`);if(d){const det=d.closest('details');if(det&&!det.open)det.open=true;toggleBook(d,true)}
+  updateChipNow();}
+function pickLang(u){for(const L of langsArr())if(textRefs(u,L).length)return L;for(const L of ['ru','en','lt'])if(textRefs(u,L).length)return L;return langsArr()[0]||'ru'}
+function closeReader(){$('reader').setAttribute('data-hide','');$('lib').removeAttribute('data-hide');$('backBtn').hidden=true}
+$('backBtn').onclick=closeReader;
+$('prevCh').onclick=()=>{const u=ALL_UNITS[R.u.gi-1];if(u)P.u?startUnit(u):openReader(u,{focus:true})};
+$('nextCh').onclick=()=>{const u=ALL_UNITS[R.u.gi+1];if(u)P.u?startUnit(u):openReader(u,{focus:true})};
+function renderTabs(){const u=R.u;if(!u)return;$('tabs').innerHTML=['ru','en','lt'].map(L=>{const has=L==='ru'?!!(u.ruText||u.ru):textRefs(u,L).length>0||(L==='en'?(u.en||[]).length>0:(u.lt||[]).length>0);
+  return `<button class="${L}${R.lang===L?' on':''}" data-l="${L}"${has?'':' disabled'}>${L.toUpperCase()}</button>`}).join('');
+  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>showLang(b.dataset.l,true))}
+function showLang(L,user){if(!R.u)return;if(R.lang===L)return;if(!user&&!textRefs(R.u,L).length)return;R.lang=L;renderTabs();renderText();if(user){$('follow').checked=false;S.follow=false;store.save()}}
+function renderBest(){const u=R.u;const v=S.best[u.key];$('ubest').innerHTML=`<span>Understood this chapter best in</span>`+['ru','en','lt'].map(L=>`<button class="${L}${v===L?' on':''}" data-l="${L}">${L.toUpperCase()}</button>`).join('')+`<span class="muted" id="bestStat"></span>`;
+  $('ubest').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(S.best[u.key]===b.dataset.l)delete S.best[u.key];else S.best[u.key]=b.dataset.l;store.save();renderBest();paintChips(u.book)});
+  const c={ru:0,en:0,lt:0};for(const k in S.best){if(k.split('|').length===2)c[S.best[k]]++}
+  $('bestStat').textContent=(c.ru+c.en+c.lt)?` · so far RU ${c.ru} · EN ${c.en} · LT ${c.lt}`:'';}
+async function renderText(){const u=R.u,L=R.lang;const el=$('text');const my=++renderText.tok||(renderText.tok=1);
+  const refs=textRefs(u,L);
+  if(!refs.length){el.innerHTML=`<p class="note">${L==='ru'?'The Russian text of this chapter is not in the app yet; the recording plays normally.':L==='lt'?'No Lithuanian text for this chapter. The Lithuanian recording (if any) still plays.':'No English text for this chapter.'}</p>`;return}
+  el.innerHTML='<p class="muted">Loading text…</p>';
+  const parts=await chapterText(u,L);if(my!==renderText.tok)return;
+  let h='';
+  parts.forEach((p,pi)=>{if(parts.length>1||u.book.psalms&&L!=='ru')h+=`<h3>${esc(L==='en'?(p.code==='PS2'?'Psalm 151':'Psalm '+(p.ci+1)):L==='lt'?(p.ci+1)+' psalmė':'Псалом '+(p.ci+1))}</h3>`;
+    if(!p.verses){h+=`<p class="note">Text not available.</p>`;return}
+    const empty=p.verses.every(v=>!v||!v.trim());if(empty){h+=`<p class="note">${L==='lt'?'This chapter has not been translated yet in the TPV (the Lithuanian translation is still in progress).':'Text not available.'}</p>`;return}
+    p.verses.forEach((v,i)=>{const n=parts.length>1?(p.ci+1)+':'+(i+1):i+1;const vk=u.key+'|'+n;const best=S.best[vk];const hasq=S.qs.some(q=>q.b===u.book.code&&q.u===u.id&&String(q.v)===String(n));
+      h+=`<span class="v${v&&v.trim()?'':' missing'}${hasq?' hasq':''}" data-v="${n}" data-p="${pi}"${best?` data-best="${best}"`:''}><sup>${i+1}</sup>${v&&v.trim()?esc(v):'(not translated yet)'}</span> `});});
+  if(L==='lt')h+=`<p class="note">Lithuanian text: Tikinčiųjų paveldo vertimas (TPV, CC BY-SA), a translation still in progress, so some chapters are missing. The recording is the New World Translation, a different translation.</p>`;
+  el.innerHTML=h;}
+$('text').addEventListener('click',e=>{const v=e.target.closest('.v');if(!v)return;const was=v.classList.contains('sel');
+  $('text').querySelectorAll('.v.sel').forEach(x=>x.classList.remove('sel'));$('text').querySelectorAll('.vact').forEach(x=>x.remove());
+  if(was)return;v.classList.add('sel');const n=v.dataset.v;const u=R.u;const vk=u.key+'|'+n;const best=S.best[vk];
+  const bar=document.createElement('div');bar.className='vact';bar.innerHTML=`<span class="muted">Verse ${esc(n)} · understood best in</span>`+['ru','en','lt'].map(L=>`<button class="${L}${best===L?' on':''}" data-l="${L}">${L.toUpperCase()}</button>`).join('')+`<button data-ask="1">? Ask about this verse</button>`;
+  bar.querySelectorAll('button[data-l]').forEach(b=>b.onclick=()=>{if(S.best[vk]===b.dataset.l)delete S.best[vk];else S.best[vk]=b.dataset.l;store.save();const nb=S.best[vk];if(nb)v.dataset.best=nb;else delete v.dataset.best;bar.querySelectorAll('button[data-l]').forEach(x=>x.classList.toggle('on',x.dataset.l===nb))});
+  bar.querySelector('[data-ask]').onclick=()=>openAsk(u,n);v.after(bar);});
+
+/* =====================================================================
+   QUESTIONS, SETTINGS, SYNC (bottom sheet)
+   ===================================================================== */
+function openSheet(html){$('sheet').innerHTML=`<button class="icon x" id="sheetX" aria-label="Close">✕</button>`+html;$('sheetWrap').hidden=false;$('sheetX').onclick=closeSheet;$('scrim').onclick=closeSheet;document.body.style.overflow='hidden'}
+function closeSheet(){$('sheetWrap').hidden=true;document.body.style.overflow=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sheetWrap').hidden)closeSheet()});
+async function versesFor(u,n){const out={};for(const L of ['ru','en','lt']){const parts=await chapterText(u,L);for(const p of parts){const v=p.verses&&p.verses[n-1];if(v&&v.trim()){out[L]=v.trim();break}}}return out}
+async function buildPrompt(q){const u=BY[q.b]&&BY[q.b].units.find(x=>x.id===q.u);if(!u)return q.q;
+  let p=`I am reading the Bible chapter by chapter in three languages: Russian (Synodal translation), English (World English Bible) and Lithuanian. This is ${unitTitle(u,'en')} (${unitTitle(u,'ru')})${q.v?', verse '+q.v:''}.`;
+  if(q.v){const vs=await versesFor(u,+q.v);for(const L of ['ru','en','lt'])if(vs[L])p+=`\n${LANG_NAME[L]}: "${vs[L].slice(0,400)}"`}
+  p+=`\n\nPlease explain it clearly and simply, point out where the translations differ, and say how the Orthodox Church traditionally understands this passage. My question: ${q.q}`;return p}
+const claudeUrl=p=>'https://claude.ai/new?q='+encodeURIComponent(p);
+function openAsk(u,v){openSheet(`<h2>Ask about ${esc(unitTitle(u,'en'))}${v?':'+esc(v):''}</h2><p class="muted" style="margin:0 0 8px">${esc(unitTitle(u,'ru'))}${v?', стих '+esc(v):''}</p>
+  <label>Verse <input type="text" id="askV" inputmode="numeric" value="${esc(v||'')}" style="width:80px"></label>
+  <p><textarea id="askQ" rows="3" placeholder="Your question, in any language"></textarea></p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="askGo">Save and ask Claude</button><button id="askSave">Save only</button></div>
+  <p class="muted" style="font-size:12.5px">Claude opens in a new tab with the verse in all three languages and your question already filled in.</p>`);
+  const save=()=>{const t=$('askQ').value.trim();if(!t){toast('Type a question first');return null}const q={b:u.book.code,u:u.id,v:$('askV').value.trim(),q:t,t:Date.now()};S.qs.push(q);store.save();paintChips(u.book);if(R.u===u)renderText();return q};
+  $('askSave').onclick=()=>{if(save()){closeSheet();toast('Saved to My questions')}};
+  $('askGo').onclick=async()=>{const q=save();if(!q)return;const w=window.open('about:blank','_blank');const p=await buildPrompt(q);if(w)w.location=claudeUrl(p);else location.href=claudeUrl(p);closeSheet()};
+  setTimeout(()=>{const q=$('askQ');if(q)q.focus()},50)}
+async function openNotes(){const c={ru:0,en:0,lt:0},cv={ru:0,en:0,lt:0};for(const k in S.best){(k.split('|').length===2?c:cv)[S.best[k]]++}
+  const items=S.qs.map((q,i)=>{const u=BY[q.b]&&BY[q.b].units.find(x=>x.id===q.u);return `<li><span class="ref">${u?esc(unitTitle(u,'en')):esc(q.b)}${q.v?':'+esc(q.v):''}</span> <span></span><div class="acts"><a href="#" data-ask="${i}">Ask Claude</a><button data-open="${i}">Open chapter</button><button data-copy="${i}">Copy</button><button data-del="${i}">Delete</button></div></li>`}).join('');
+  openSheet(`<h2>My questions</h2><div class="stat"><span>Understood best · chapters: <b>RU ${c.ru}</b> · <b>EN ${c.en}</b> · <b>LT ${c.lt}</b></span><span>verses: <b>RU ${cv.ru}</b> · <b>EN ${cv.en}</b> · <b>LT ${cv.lt}</b></span></div>
+  ${S.qs.length?`<ul class="qs" id="qsList">${items}</ul>`:'<p class="muted">No questions yet. Open a chapter, tap a verse and choose “Ask about this verse”.</p>'}`);
+  const ul=$('qsList');if(!ul)return;ul.querySelectorAll('li').forEach((li,i)=>li.querySelector('span:nth-child(2)').textContent=S.qs[i].q);
+  ul.addEventListener('click',async e=>{const a=e.target.closest('[data-ask]');if(a){e.preventDefault();const w=window.open('about:blank','_blank');const p=await buildPrompt(S.qs[+a.dataset.ask]);if(w)w.location=claudeUrl(p);else location.href=claudeUrl(p);return}
+    const o=e.target.closest('[data-open]');if(o){const q=S.qs[+o.dataset.open];const u=BY[q.b]&&BY[q.b].units.find(x=>x.id===q.u);if(u){closeSheet();openReader(u,{focus:true})}return}
+    const cp=e.target.closest('[data-copy]');if(cp){const p=await buildPrompt(S.qs[+cp.dataset.copy]);try{await navigator.clipboard.writeText(p);toast('Copied')}catch(err){toast('Could not copy')}return}
+    const d=e.target.closest('[data-del]');if(d){S.qs.splice(+d.dataset.del,1);store.save();openNotes();BOOKS.forEach(paintChips);if(R.u)renderText()}});}
+$('notesBtn').onclick=openNotes;
+function openSettings(){const T=ALL_UNITS.length,H=Object.keys(S.heard).length;
+  openSheet(`<h2>Settings and progress</h2>
+  <div class="stat"><span><b>${H}</b> of <b>${T}</b> chapters heard</span><span><b>${S.qs.length}</b> questions</span></div>
+  <h3 style="font-size:16px;margin:12px 0 4px">Move progress to another device</h3>
+  <p class="muted" style="margin:0 0 6px;font-size:13px">Progress is saved in this browser only. Copy the code here and paste it on your other device to merge.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="expBtn">Copy my progress code</button><button id="impBtn">Paste a code</button></div>
+  <p><textarea id="syncBox" rows="3" hidden></textarea></p>
+  <h3 style="font-size:16px;margin:16px 0 4px">Data</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="clearLt">Refresh Lithuanian links</button><button id="resetAll">Clear all progress</button></div>
+  <h3 style="font-size:16px;margin:16px 0 4px">About the recordings and texts</h3>
+  <p class="muted" style="font-size:13px;margin:0">Russian: Synodal translation, all 77 books of the Orthodox Bible, read by Ilya Prudovsky (azbyka.ru). English: World English Bible, read by Winfred Henson (ebible.org); text is the WEB Updated edition, with the deuterocanonical books. Lithuanian: audio is the New World Translation (jw.org); text is the Tikinčiųjų paveldo vertimas (CC BY-SA), still in progress. Psalms follow the Russian (Synodal) numbering; English and Lithuanian switch to the matching psalm.</p>`);
+  $('expBtn').onclick=async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({heard:S.heard,best:S.best,qs:S.qs,last:S.last}))));const box=$('syncBox');box.hidden=false;box.value=code;try{await navigator.clipboard.writeText(code);toast('Copied. Paste it on the other device.')}catch(e){box.select();toast('Select the code and copy it')}};
+  $('impBtn').onclick=()=>{const box=$('syncBox');box.hidden=false;box.value='';box.placeholder='Paste the code here, then tap Paste a code again';box.focus();
+    $('impBtn').onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob(box.value.trim()))));let n=0;for(const k in o.heard||{}){if(!S.heard[k]){S.heard[k]=1;n++}}Object.assign(S.best,o.best||{});
+      for(const q of o.qs||[]){if(!S.qs.some(x=>x.t===q.t&&x.q===q.q))S.qs.push(q)}if(o.last&&!S.last)S.last=o.last;store.save();paintProgress();renderContinue();toast('Merged: '+n+' new chapters');closeSheet()}catch(e){toast('That code could not be read')}}};
+  $('clearLt').onclick=()=>{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('lt-'))localStorage.removeItem(k)}for(const k in LT_CACHE)delete LT_CACHE[k];toast('Lithuanian links will be fetched again')};
+  $('resetAll').onclick=()=>{$('resetAll').textContent='Tap again to confirm';$('resetAll').onclick=()=>{S.heard={};S.best={};S.qs=[];S.last=null;store.save();paintProgress();renderContinue();closeSheet();toast('Progress cleared')}};}
+$('setBtn').onclick=openSettings;
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+$('credits').textContent='Русский: Синодальный перевод, читает Илья Прудовский (azbyka.ru). English: World English Bible, read by Winfred Henson (ebible.org). Lietuviškai: Naujojo pasaulio vertimas (jw.org); tekstas – Tikinčiųjų paveldo vertimas.';
+renderLibrary();
+(function(){const u=lastUnit();if(u){const det=document.querySelector(`.book[data-b="${u.book.code}"]`);if(det){det.closest('details').open=true;toggleBook(det,true)}}else{const d=document.querySelector('details.sec[data-si="5"]');if(d)d.open=true}})();
+setPlayIcon();fitPlayer();window.addEventListener('load',fitPlayer);setTimeout(fitPlayer,600);
+window.__app={S,P,BOOKS,BY,ALL_UNITS,startUnit,tracksFor,enAudio,psHeb,unitTitle,openReader,renderText,store};
 </script>
 </body>
 </html>
